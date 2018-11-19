@@ -15,6 +15,7 @@ import pygame
 import player
 import projectile
 import enemies
+import map
 import math
 import random
 
@@ -24,9 +25,11 @@ class PygameGame(object):
         self.playerGroup = pygame.sprite.Group()
         self.bulletGroup = pygame.sprite.Group()
         self.entitiesGroup = pygame.sprite.Group()
+        self.obstaclesGroup = pygame.sprite.Group()
         self.player1 = player.Player(self.width//2, self.height//2)
         self.player1.preDraw()
         self.playerGroup.add(self.player1)
+        
         self.angle = 0
         self.timer = 0
 
