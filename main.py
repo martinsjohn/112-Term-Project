@@ -29,7 +29,7 @@ class PygameGame(object):
         self.player1 = player.Player(self.width//2, self.height//2)
         self.player1.preDraw()
         self.playerGroup.add(self.player1)
-        
+
         self.angle = 0
         self.timer = 0
 
@@ -40,7 +40,6 @@ class PygameGame(object):
             centerY = self.player1.y
             xDiff = x - (centerX)
             yDiff = y - (centerY)
-            print(xDiff,yDiff)
             if xDiff == 0 and y < centerY:
                 self.angle = math.pi/2
             elif xDiff == 0 and y > centerY:
@@ -128,15 +127,17 @@ class PygameGame(object):
 
 
     def redrawAll(self, screen):
+
         self.player1.preDraw()
         pygame.sprite.Group.draw(self.playerGroup,screen)
 
-        pygame.sprite.Group.draw(self.bulletGroup,screen)
+        # returns hit enemy and deletes the bullet and enemy from the game
+        if (pygame.sprite.groupcollide(self.bulletGroup,self.entitiesGroup,True,True)):
+            print("yeaaaahhhaa")
 
-        pygame.sprite.Group.draw(self.entitiesGroup,screen)
-        # returns hit enemy and deletes te bullet and enemy from the game
-        hitEnemy = pygame.sprite.groupcollide(self.bulletGroup,self.entitiesGroup,True,True)
+        pygame.sprite.Group.draw(self.bulletGroup, screen)
 
+        pygame.sprite.Group.draw(self.entitiesGroup, screen)
 
 
 
