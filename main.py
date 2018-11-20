@@ -16,8 +16,10 @@ import player
 import projectile
 import enemies
 import map
+import misc
 import math
 import random
+
 
 class PygameGame(object):
 
@@ -26,37 +28,19 @@ class PygameGame(object):
         self.bulletGroup = pygame.sprite.Group()
         self.entitiesGroup = pygame.sprite.Group()
         self.obstaclesGroup = pygame.sprite.Group()
-        self.player1 = player.Player(self.width//2, self.height//2)
+        self.player1 = player.Player(self.width//8, self.height//2)
         self.player1.preDraw()
         self.playerGroup.add(self.player1)
-
-        self.angle = 0
+        self.startBoard = map.startBoard
+        self.shotAngle = 0
         self.timer = 0
 
+        print(self.width,self.height)
 
     def mousePressed(self, x, y):
         if self.player1.rect != None:
-            centerX = self.player1.x
-            centerY = self.player1.y
-            xDiff = x - (centerX)
-            yDiff = y - (centerY)
-            if xDiff == 0 and y < centerY:
-                self.angle = math.pi/2
-            elif xDiff == 0 and y > centerY:
-                self.angle = 3*math.pi/2
-            elif yDiff == 0 and x > centerX:
-                self.angle = 0
-            elif yDiff == 0 and x < centerX:
-                self.angle = math.pi
-            else:
-                self.angle = math.pi/2 + math.atan(xDiff/-yDiff)
-                if y > centerY:
-                    self.angle *= -1
-                else:
-                    self.angle = math.pi - self.angle
-
-
-            bullet = projectile.Projectile(centerX,centerY,self.angle)
+            self.shotAngle = misc.getAngle(self.player1.x, self.player1.y, x, y)
+            bullet = projectile.Projectile(self.player1.x,self.player1.y,self.shotAngle)
             self.bulletGroup.add(bullet)
 
 
@@ -113,13 +97,17 @@ class PygameGame(object):
             self.player1.velocity[1] = 0
             self.playerGroup.update()
 
+        for enemy in self.entitiesGroup:
+            if isinstance(enemy, enemies.Chaser):
+                enemy.chase((self.player1.x, self.player1.y))
 
         self.bulletGroup.update()
+        self.entitiesGroup.update()
 
         if self.timer % 200 == 0:
             x = random.randint(0, self.width)
             y = random.randint(0, self.height)
-            enemy = enemies.Enemy(x,y)
+            enemy = enemies.Chaser(x,y)
             self.entitiesGroup.add(enemy)
 
 
@@ -127,6 +115,15 @@ class PygameGame(object):
 
 
     def redrawAll(self, screen):
+
+        for i in range(len(self.startBoard)):
+            for j in range(len(self.startBoard)):
+                width = self.width//len(self.startBoard)
+                height = self.height//len(self.startBoard)
+                x = j * (width)
+                y = i * (height)
+                if self.startBoard[i][j] != 0:
+                    pygame.draw.rect(screen,(255,255,0),(x,y,width,height))
 
         self.player1.preDraw()
         pygame.sprite.Group.draw(self.playerGroup,screen)
@@ -146,7 +143,7 @@ class PygameGame(object):
         ''' return whether a specific key is being held '''
         return self._keys.get(key, False)
 
-    def __init__(self, width=600, height=400, fps=50, title="John's TP"):
+    def __init__(self, width=800, height=600, fps=50, title="John's TP"):
         self.width = width
         self.height = height
         self.fps = fps
@@ -155,19 +152,26 @@ class PygameGame(object):
         pygame.init()
 
     def run(self):
-
+        self.init()
+        inGame = True
+        inMenu = False
         clock = pygame.time.Clock()
-        screen = pygame.display.set_mode((self.width, self.height))
+        screen = pygame.display.set_mode((self.width, self.height),pygame.RESIZABLE)
         # set the title of the window
         pygame.display.set_caption(self.title)
 
         # stores all the keys currently being held down
         self._keys = dict()
 
+        while inMenu:
+            screen.fill((255,255,255))
+            misc.createButton(screen,(100,500,100,50),(255,0,255),(255,0,200))
+            pygame.display.update()
+
+
         # call game-specific initialization
-        self.init()
-        playing = True
-        while playing:
+
+        while inGame:
             time = clock.tick(self.fps)
             self.timerFired(time)
             for event in pygame.event.get():
@@ -189,7 +193,7 @@ class PygameGame(object):
                     self._keys[event.key] = False
                     self.keyReleased(event.key, event.mod)
                 elif event.type == pygame.QUIT:
-                    playing = False
+                    inGame = False
             screen.fill(self.bgColor)
             self.redrawAll(screen)
             pygame.display.flip()
@@ -203,3 +207,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
