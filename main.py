@@ -24,24 +24,53 @@ import random
 class PygameGame(object):
 
     def init(self):
+        #Sprite Groups
         self.playerGroup = pygame.sprite.Group()
-        self.bulletGroup = pygame.sprite.Group()
-        self.entitiesGroup = pygame.sprite.Group()
+        self.bulletsGroup = pygame.sprite.Group()
+        self.enemyGroup = pygame.sprite.Group()
         self.obstaclesGroup = pygame.sprite.Group()
-        self.player1 = player.Player(self.width//8, self.height//2)
+        self.wallsGroup = pygame.sprite.Group()
+        self.floorGroup = pygame.sprite.Group()
+
+
+        self.player1 = player.Player(self.width//7, self.height//2)
         self.player1.preDraw()
         self.playerGroup.add(self.player1)
         self.startBoard = map.startBoard
         self.shotAngle = 0
         self.timer = 0
+        self.currBoard = map.startBoard
+        self.initializeBoard()
 
-        print(self.width,self.height)
+
+
+
+    def initializeBoard(self):
+        pygame.sprite.Group.empty(self.wallsGroup)
+        for i in range(len(self.currBoard)):
+            for j in range(len(self.currBoard)):
+                width = self.width//len(self.currBoard)
+                height = self.height//len(self.currBoard)
+                x = j * (width)
+                y = i * (height)
+                if self.currBoard[i][j] == 2:
+                    wallTop = map.WallTop(x,y,width,height)
+                    self.wallsGroup.add(wallTop)
+                elif self.currBoard[i][j] == 1:
+                    wallSide = map.WallSide(x,y,width,height)
+                    self.wallsGroup.add(wallSide)
+                else:
+                    floor = map.Floor(x,y,width,height)
+                    self.floorGroup.add(floor)
+
+
+
 
     def mousePressed(self, x, y):
         if self.player1.rect != None:
             self.shotAngle = misc.getAngle(self.player1.x, self.player1.y, x, y)
             bullet = projectile.Projectile(self.player1.x,self.player1.y,self.shotAngle)
-            self.bulletGroup.add(bullet)
+            self.bulletsGroup.add(bullet)
 
 
     def mouseReleased(self, x, y):
@@ -75,40 +104,45 @@ class PygameGame(object):
         if keyCode[119]:  # W
             if (self.player1.isLeft, self.player1.isRight) == (False, False):
                 self.player1.isRight = True
-            self.player1.velocity[1] = -self.player1.speed
-            self.player1.velocity[0] = 0
-            self.playerGroup.update()
+                #TODO Fix the collision so that player can still move after touching wall
+            if not pygame.sprite.groupcollide(self.playerGroup,self.wallsGroup,False,False):
+                self.player1.velocity[1] = -self.player1.speed
+                self.player1.velocity[0] = 0
+                self.playerGroup.update()
 
         if keyCode[97]:  # A
             self.player1.isLeft, self.player1.isLookLeft = True, True
-            self.player1.velocity[0] = -self.player1.speed
-            self.player1.velocity[1] = 0
-            self.playerGroup.update()
+            if not pygame.sprite.groupcollide(self.playerGroup,self.wallsGroup,False,False):
+                self.player1.velocity[0] = -self.player1.speed
+                self.player1.velocity[1] = 0
+                self.playerGroup.update()
 
         if keyCode[115]:  # S
             if (self.player1.isLeft, self.player1.isRight) == (False, False):
                 self.player1.isLeft = True
-            self.player1.velocity[1] = self.player1.speed
-            self.player1.velocity[0] = 0
-            self.playerGroup.update()
+            if not pygame.sprite.groupcollide(self.playerGroup,self.wallsGroup,False,False):
+                self.player1.velocity[1] = self.player1.speed
+                self.player1.velocity[0] = 0
+                self.playerGroup.update()
         if keyCode[100]:  # D
             self.player1.isRight, self.player1.isLookRight = True, True
-            self.player1.velocity[0] = self.player1.speed
-            self.player1.velocity[1] = 0
-            self.playerGroup.update()
+            if not pygame.sprite.groupcollide(self.playerGroup,self.wallsGroup,False,False):
+                self.player1.velocity[0] = self.player1.speed
+                self.player1.velocity[1] = 0
+                self.playerGroup.update()
 
-        for enemy in self.entitiesGroup:
+        for enemy in self.enemyGroup:
             if isinstance(enemy, enemies.Chaser):
                 enemy.chase((self.player1.x, self.player1.y))
 
-        self.bulletGroup.update()
-        self.entitiesGroup.update()
+        self.bulletsGroup.update()
+        self.enemyGroup.update()
 
-        if self.timer % 200 == 0:
+        if self.timer % 200 == 200:
             x = random.randint(0, self.width)
             y = random.randint(0, self.height)
             enemy = enemies.Chaser(x,y)
-            self.entitiesGroup.add(enemy)
+            self.enemyGroup.add(enemy)
 
 
 
@@ -116,25 +150,24 @@ class PygameGame(object):
 
     def redrawAll(self, screen):
 
-        for i in range(len(self.startBoard)):
-            for j in range(len(self.startBoard)):
-                width = self.width//len(self.startBoard)
-                height = self.height//len(self.startBoard)
-                x = j * (width)
-                y = i * (height)
-                if self.startBoard[i][j] != 0:
-                    pygame.draw.rect(screen,(255,255,0),(x,y,width,height))
 
+        pygame.sprite.Group.draw(self.wallsGroup,screen)
+        pygame.sprite.Group.draw(self.floorGroup,screen)
+
+        #draws player
         self.player1.preDraw()
         pygame.sprite.Group.draw(self.playerGroup,screen)
 
-        # returns hit enemy and deletes the bullet and enemy from the game
-        if (pygame.sprite.groupcollide(self.bulletGroup,self.entitiesGroup,True,True)):
+        # checks collisions between sprite groups
+        if (pygame.sprite.groupcollide(self.bulletsGroup, self.enemyGroup, True, True)):
             print("yeaaaahhhaa")
+        pygame.sprite.groupcollide(self.bulletsGroup, self.wallsGroup,True,False)
 
-        pygame.sprite.Group.draw(self.bulletGroup, screen)
+        #draws bullets
+        pygame.sprite.Group.draw(self.bulletsGroup, screen)
 
-        pygame.sprite.Group.draw(self.entitiesGroup, screen)
+        #draws enemies
+        pygame.sprite.Group.draw(self.enemyGroup, screen)
 
 
 
