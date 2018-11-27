@@ -14,10 +14,11 @@ class Chaser(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.speed = 3
         self.attackRadius = 200
-        self.image = pygame.image.load("testPics\chaser.png")
+        self.health = 3
+        self.image = pygame.image.load("pics\chaser.png")
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
-        self.imageL = pygame.image.load("testPics\chaser.png")
+        self.imageL = pygame.image.load("pics\chaser.png")
         self.imageR = pygame.transform.flip(self.imageL,True,False)
         self.velocity =[0,0]
 

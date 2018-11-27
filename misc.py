@@ -20,14 +20,17 @@ pygame.init()
 def getAngle(startX,startY,destX,destY):
     xDiff = destX - (startX)
     yDiff = destY - (startY)
+
     if xDiff == 0 and destY < startY:
         angle = math.pi / 2
     elif xDiff == 0 and destY > startY:
         angle = 3 * math.pi / 2
     elif yDiff == 0 and destX > startX:
         angle = 0
-    elif yDiff == 0 and destX < startY:
+    elif yDiff == 0 and destX < startX:
         angle = math.pi
+    elif yDiff == 0 and xDiff == 0:
+        angle = 0
     else:
         angle = math.pi / 2 + math.atan(xDiff / -yDiff)
         if destY > startY:
@@ -37,15 +40,36 @@ def getAngle(startX,startY,destX,destY):
     return angle
 
 
-def createButton(surface, rect, activeColor, inactiveColor, action = None):
 
-    mousePos = pygame.mouse.get_pos()
-    clickPos = pygame.mouse.get_pressed()
-    (x,y,width,height) = rect
-    if x < mousePos[0] < x + width and y < mousePos[1] < y + height:
-        pygame.draw.rect(surface,activeColor,rect)
-        if clickPos[0] :
-            action()
-    else:
-        pygame.draw.rect(surface,inactiveColor,rect)
+class Button(object):
+    def __init__(self,rect,text):
+        self.rect = rect
+        self.left = rect[0]
+        self.right = rect[0] + rect[2]
+        self.top = rect[1]
+        self.bottom = rect[1] + rect[3]
+        self.textSize = 300//len(text)
+        self.activeColor = (255,200,0)
+        self.inactiveColor = (255,0,0)
+        self.color = self.inactiveColor
+        self.font = pygame.font.Font('font\coolFont.ttf', self.textSize)
+        self.text = self.font.render(str(text), True, (0,0,0))
+        self.textRect = self.text.get_rect(center =(self.left + rect[2]//2, self.top + rect[3]//2))
+
+    def mouseCheck(self,mouseX,mouseY):
+        if (self.left < mouseX < self.right) and (self.top < mouseY < self.bottom):
+            self.color = self.activeColor
+        else:
+            self.color = self.inactiveColor
+
+    def clickCheck(self,clickX,clickY):
+        if (self.left < clickX < self.right) and (self.top < clickY < self.bottom):
+            return True
+
+
+    def draw(self,surface):
+        pygame.draw.rect(surface,self.color, self.rect)
+        surface.blit(self.text,self.textRect)
+
+
 

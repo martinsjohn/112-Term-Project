@@ -15,8 +15,9 @@ class Projectile(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.speed = 10
+        self.power = 1
         self.velocity = [self.speed*math.cos(angle),self.speed*-math.sin(angle)]
-        self.image = pygame.image.load("testPics\omato.png")
+        self.image = pygame.image.load("pics\omato.png")
         self.rect = self.image.get_rect()
         self.rect.center = (x,y)
 

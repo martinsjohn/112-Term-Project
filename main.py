@@ -17,13 +17,17 @@ import projectile
 import enemies
 import map
 import misc
-import math
+import copy
 import random
 
 
 class PygameGame(object):
 
     def init(self):
+        #Modes
+        self.isMenu = True
+        self.isPaused = False
+
         #Sprite Groups
         self.playerGroup = pygame.sprite.Group()
         self.bulletsGroup = pygame.sprite.Group()
@@ -32,21 +36,30 @@ class PygameGame(object):
         self.wallsGroup = pygame.sprite.Group()
         self.floorGroup = pygame.sprite.Group()
 
+        # Initializations for menu screen
+        self.startBut = misc.Button((self.width//2 - 75, 4*self.height//7,150,75),"Start!")
+        self.quitBut = misc.Button((self.width//2 - 75, 5*self.height//7,150,75),"Quit!")
+        self.instrBut = misc.Button((self.width//2 - 75, 6*self.height//7,150,75),"Instructions")
+        self.menuBackground = pygame.image.load('pics\menuBackground.png')
+        self.menuBackground = pygame.transform.scale(self.menuBackground, (self.width,self.height))
+        self.menuBackRect = self.menuBackground.get_rect()
 
-        self.player1 = player.Player(self.width//7, self.height//2)
+        # Initializations for the player and enemies
+        self.player1 = player.Player(self.width//2, self.height//2)
         self.player1.preDraw()
         self.playerGroup.add(self.player1)
-        self.startBoard = map.startBoard
         self.shotAngle = 0
         self.timer = 0
-        self.currBoard = map.startBoard
+
+        # Initializations for the map
+        self.boardList = [map.startBoard]
+        self.room = 0
+        self.currBoard = self.boardList[self.room]
         self.initializeBoard()
 
-
-
-
     def initializeBoard(self):
-        pygame.sprite.Group.empty(self.wallsGroup)
+        self.wallsGroup.empty()
+        self.floorGroup.empty()
         for i in range(len(self.currBoard)):
             for j in range(len(self.currBoard)):
                 width = self.width//len(self.currBoard)
@@ -66,83 +79,190 @@ class PygameGame(object):
 
 
 
+    def startGame(self):
+        self.isMenu = False
+        self.isPaused = False
+
+
+
+
     def mousePressed(self, x, y):
-        if self.player1.rect != None:
-            self.shotAngle = misc.getAngle(self.player1.x, self.player1.y, x, y)
-            bullet = projectile.Projectile(self.player1.x,self.player1.y,self.shotAngle)
-            self.bulletsGroup.add(bullet)
+        if self.isMenu:
+            if self.startBut.clickCheck(x,y):
+                self.startGame()
+
+            elif self.quitBut.clickCheck(x,y):
+                pygame.quit()
+
+            elif self.instrBut.clickCheck(x,y):
+                pass
+
+        elif self.isPaused:
+            pass
+
+        else:
+
+            if self.player1.rect != None:
+                self.shotAngle = misc.getAngle(self.player1.centerX, self.player1.centerY, x, y)
+                bullet = projectile.Projectile(self.player1.centerX,self.player1.centerY,self.shotAngle)
+                self.bulletsGroup.add(bullet)
 
 
     def mouseReleased(self, x, y):
         pass
 
     def mouseMotion(self, x, y):
-        pass
+        if self.isMenu:
+            self.startBut.mouseCheck(x,y)
+            self.quitBut.mouseCheck(x,y)
+            self.instrBut.mouseCheck(x,y)
+
+        elif self.isPaused:
+            pass
+        else:
+
+            pass
     def mouseDrag(self, x, y):
         pass
 
     def keyPressed(self, keyCode, modifier):
-        pass
+        if self.isMenu:
+            pass
+
+        elif self.isPaused:
+            pass
+
+        else:
+            if keyCode == 114:
+                main()
+
 
     def keyReleased(self, keyCode, modifier):
-        if keyCode == 119: # W
-            self.player1.isRight = False
-            self.player1.isLookRight, self.player1.isLookLeft = True, False
-        if keyCode == 97: # A
-            self.player1.isLeft = False
-            self.player1.isLookRight, self.player1.isLookLeft = False, True
-        if keyCode == 115: # S
-            self.player1.isLeft = False
-            self.player1.isLookRight, self.player1.isLookLeft = False, True
-        if keyCode == 100: # D
-            self.player1.isRight = False
-            self.player1.isLookRight, self.player1.isLookLeft = True, False
+        if self.isMenu:
+            pass
+
+        elif self.isPaused:
+            pass
+
+        else:
+
+            if keyCode == 119: # W
+                self.player1.isRight = False
+                self.player1.isLookRight, self.player1.isLookLeft = True, False
+                self.player1.velocity[1] = 0
+            if keyCode == 97: # A
+                self.player1.isLeft = False
+                self.player1.isLookRight, self.player1.isLookLeft = False, True
+                self.player1.velocity[0] = 0
+            if keyCode == 115: # S
+                self.player1.isLeft = False
+                self.player1.isLookRight, self.player1.isLookLeft = False, True
+                self.player1.velocity[1] = 0
+            if keyCode == 100: # D
+                self.player1.isRight = False
+                self.player1.isLookRight, self.player1.isLookLeft = True, False
+                self.player1.velocity[0] = 0
 
     def timerFired(self, dt):
-        self.timer += 1
         keyCode = pygame.key.get_pressed()
-        if keyCode[119]:  # W
-            if (self.player1.isLeft, self.player1.isRight) == (False, False):
-                self.player1.isRight = True
-                #TODO Fix the collision so that player can still move after touching wall
-            if not pygame.sprite.groupcollide(self.playerGroup,self.wallsGroup,False,False):
+
+        if self.isMenu:
+            pass
+
+        elif self.isPaused:
+            pass
+
+        else:
+            if keyCode[119]:  # W
+                if (self.player1.isLeft, self.player1.isRight) == (False, False):
+                    self.player1.isRight = True
                 self.player1.velocity[1] = -self.player1.speed
-                self.player1.velocity[0] = 0
-                self.playerGroup.update()
 
-        if keyCode[97]:  # A
-            self.player1.isLeft, self.player1.isLookLeft = True, True
-            if not pygame.sprite.groupcollide(self.playerGroup,self.wallsGroup,False,False):
+
+            if keyCode[97]:  # A
+                self.player1.isLeft, self.player1.isLookLeft = True, True
                 self.player1.velocity[0] = -self.player1.speed
-                self.player1.velocity[1] = 0
-                self.playerGroup.update()
 
-        if keyCode[115]:  # S
-            if (self.player1.isLeft, self.player1.isRight) == (False, False):
-                self.player1.isLeft = True
-            if not pygame.sprite.groupcollide(self.playerGroup,self.wallsGroup,False,False):
+
+            if keyCode[115]:  # S
+                if (self.player1.isLeft, self.player1.isRight) == (False, False):
+                    self.player1.isLeft = True
                 self.player1.velocity[1] = self.player1.speed
-                self.player1.velocity[0] = 0
-                self.playerGroup.update()
-        if keyCode[100]:  # D
-            self.player1.isRight, self.player1.isLookRight = True, True
-            if not pygame.sprite.groupcollide(self.playerGroup,self.wallsGroup,False,False):
+
+
+            if keyCode[100]:  # D
+                self.player1.isRight, self.player1.isLookRight = True, True
                 self.player1.velocity[0] = self.player1.speed
-                self.player1.velocity[1] = 0
-                self.playerGroup.update()
 
-        for enemy in self.enemyGroup:
-            if isinstance(enemy, enemies.Chaser):
-                enemy.chase((self.player1.x, self.player1.y))
+            self.timer += 1
+            self.playerGroup.update(self.wallsGroup)
 
-        self.bulletsGroup.update()
-        self.enemyGroup.update()
 
-        if self.timer % 200 == 200:
-            x = random.randint(0, self.width)
-            y = random.randint(0, self.height)
-            enemy = enemies.Chaser(x,y)
-            self.enemyGroup.add(enemy)
+            if self.player1.centerX >= self.width:
+                self.room += 1
+                if self.room < 4:
+                    if self.room > len(self.boardList) - 1:
+                        newBoard = map.makeBoard(copy.deepcopy(map.mainBoard),map.obstacles)
+                        self.boardList.append(newBoard)
+
+                elif self.room ==4:
+                    if self.room > len(self.boardList) - 1:
+                        self.boardList.append(map.bossBoard)
+
+                self.currBoard = self.boardList[self.room]
+                self.initializeBoard()
+                self.player1.x = 0
+                self.player1.y = self.height//2
+
+            elif self.player1.centerX <= 0:
+                self.room -= 1
+                self.currBoard = self.boardList[self.room]
+                self.initializeBoard()
+                self.player1.x = self.width - self.player1.rect.width
+                self.player1.y = self.height//2
+
+
+
+
+
+            '''
+            if pygame.sprite.groupcollide(self.playerGroup, self.wallsGroup, False, False):
+                wall = pygame.sprite.spritecollideany(self.player1, self.wallsGroup)
+                halfPlayerH = self.player1.rect.height//2
+                halfPlayerW = self.player1.rect.width//2
+                tY = self.player1.y - self.player1.rect.height//2
+                tX = self.player1.x - self.player1.rect.width//2
+                bY = self.player1.y + self.player1.rect.height//2
+                bX = self.player1.x + self.player1.rect.width//2
+                wtY = wall.rect.y
+                wtX = wall.rect.x
+                wbY = wall.rect.y + wall.rect.height
+                wbX = wall.rect.x + wall.rect.width
+
+
+                if tY < wbY and bY > wbY:
+                    self.player1.y = wbY + halfPlayerH
+                elif tY < wtY and bY > wtY:
+                    self.player1.y = wtY - halfPlayerH
+                elif tX < wbX and bX > wbX:
+                    self.player1.x = wbX + halfPlayerW +1
+                elif tX < wtX and bX > wtX:
+                    self.player1.x = wtX - 2*halfPlayerW -1
+            '''
+
+
+            for enemy in self.enemyGroup:
+                if isinstance(enemy, enemies.Chaser):
+                    enemy.chase((self.player1.centerX, self.player1.centerY))
+
+            self.bulletsGroup.update()
+            self.enemyGroup.update()
+
+            if self.timer % 200 == 50:
+                x = random.randint(100, 400)
+                y = random.randint(100, 400)
+                enemy = enemies.Chaser(x,y)
+                self.enemyGroup.add(enemy)
 
 
 
@@ -150,24 +270,45 @@ class PygameGame(object):
 
     def redrawAll(self, screen):
 
+        if self.isMenu:
+            # draws buttons
+            screen.blit(self.menuBackground,self.menuBackRect)
+            self.startBut.draw(screen)
+            self.quitBut.draw(screen)
+            self.instrBut.draw(screen)
 
-        pygame.sprite.Group.draw(self.wallsGroup,screen)
-        pygame.sprite.Group.draw(self.floorGroup,screen)
+        elif self.isPaused:
+            pass
 
-        #draws player
-        self.player1.preDraw()
-        pygame.sprite.Group.draw(self.playerGroup,screen)
+        else:
+            # draws walls and floor
+            pygame.sprite.Group.draw(self.wallsGroup,screen)
+            pygame.sprite.Group.draw(self.floorGroup,screen)
 
-        # checks collisions between sprite groups
-        if (pygame.sprite.groupcollide(self.bulletsGroup, self.enemyGroup, True, True)):
-            print("yeaaaahhhaa")
-        pygame.sprite.groupcollide(self.bulletsGroup, self.wallsGroup,True,False)
+            #draws player
+            self.player1.preDraw()
+            pygame.sprite.Group.draw(self.playerGroup,screen)
 
-        #draws bullets
-        pygame.sprite.Group.draw(self.bulletsGroup, screen)
+            # checks collisions between sprite groups
+            pygame.sprite.groupcollide(self.bulletsGroup, self.enemyGroup, True, False)
+            for bullet in self.bulletsGroup:
+                hitEnemies = pygame.sprite.spritecollide(bullet,self.enemyGroup,False)
+                print(hitEnemies)
+                for enemy in hitEnemies:
+                    print("hoopla1")
+                    enemy.health -= bullet.power
+                    if enemy.health <= 0:
+                        enemy.kill()
+                        print("hoopla2")
 
-        #draws enemies
-        pygame.sprite.Group.draw(self.enemyGroup, screen)
+
+            pygame.sprite.groupcollide(self.bulletsGroup, self.wallsGroup,True,False)
+
+            #draws bullets
+            pygame.sprite.Group.draw(self.bulletsGroup, screen)
+
+            #draws enemies
+            pygame.sprite.Group.draw(self.enemyGroup, screen)
 
 
 
@@ -187,7 +328,6 @@ class PygameGame(object):
     def run(self):
         self.init()
         inGame = True
-        inMenu = False
         clock = pygame.time.Clock()
         screen = pygame.display.set_mode((self.width, self.height),pygame.RESIZABLE)
         # set the title of the window
@@ -196,15 +336,9 @@ class PygameGame(object):
         # stores all the keys currently being held down
         self._keys = dict()
 
-        while inMenu:
-            screen.fill((255,255,255))
-            misc.createButton(screen,(100,500,100,50),(255,0,255),(255,0,200))
-            pygame.display.update()
-
-
         # call game-specific initialization
-
         while inGame:
+
             time = clock.tick(self.fps)
             self.timerFired(time)
             for event in pygame.event.get():
