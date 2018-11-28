@@ -31,6 +31,9 @@ class Player(pygame.sprite.Sprite):
         self.image ='pics\chefK.png'
         self.getPics(self.image)
 
+        #variable attributes
+        self.maxHealth = 10
+        self.currHealth = 10
 
     def getPics(self,image):
         frameWidth = 55
@@ -44,31 +47,50 @@ class Player(pygame.sprite.Sprite):
         self.walkingR = [self.pics[1], self.pics[2], self.pics[3], self.pics[4]]
         self.walkingL = [self.picsRev[1], self.picsRev[2], self.picsRev[3], self.picsRev[4]]
 
+
+    def hitTop(self,wall):
+        if self.rect.y < wall.rect.y + wall.rect.height:
+            if self.rect.y + self.rect.height > wall.rect.y + wall.rect.height:
+                return True
+        return False
+
+
+    def hitBottom(self,wall):
+        pass
+
+    def hitLeft(self,wall):
+        pass
+
+    def hitRight(self,wall):
+        pass
+
+
     def update(self,walls):
-
-
         self.x += self.velocity[0]
-        hitWalls = pygame.sprite.spritecollide(self,walls,False)
-
-        for wall in hitWalls:
-
-            # if moving left, make right side of wall the boundary
-            if self.velocity[0] < 0:
-                self.x = wall.rect.x + wall.rect.width
-            # if moving right, make left side of wall the boundary
-            elif self.velocity[0] > 0:
-                self.x = wall.rect.x - self.rect.width
-
         self.y += self.velocity[1]
         hitWalls = pygame.sprite.spritecollide(self,walls,False)
         for wall in hitWalls:
+            # if moving left, make right side of wall the boundary
+            if self.velocity[0] < 0 and self.velocity[1] == 0:
+                self.x = wall.rect.x + wall.rect.width
+            # if moving right, make left side of wall the boundary
+            elif self.velocity[0] > 0 and self.velocity[1] == 0:
+                self.x = wall.rect.x - self.rect.width
+
             # if moving up, make bottom of wall the boundary
-            if self.velocity[1] < 0:
+            elif self.velocity[1] < 0 and self.velocity[0] == 0:
                 self.y = wall.rect.y + wall.rect.height
 
-            #if moving down, make top of wall the boundary
-            elif self.velocity[1] > 0:
+            # if moving down, make top of wall the boundary
+            elif self.velocity[1] > 0 and self.velocity[0] == 0:
                 self.y = wall.rect.y - self.rect.height
+
+            elif self.velocity[0] > 0 and self.velocity[1] < 0:
+                if self.hitTop(wall):
+                    print("NNNNN")
+                    self.y = wall.rect.y + wall.rect.height
+                    self.velocity[1] = -.001
+
 
 
     def preDraw(self):

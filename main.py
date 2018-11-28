@@ -27,6 +27,7 @@ class PygameGame(object):
         #Modes
         self.isMenu = True
         self.isPaused = False
+        self.isInstr = False
 
         #Sprite Groups
         self.playerGroup = pygame.sprite.Group()
@@ -57,6 +58,24 @@ class PygameGame(object):
         self.currBoard = self.boardList[self.room]
         self.initializeBoard()
 
+        # Initializations for game data
+        self.font = pygame.font.Font('font\coolFont.ttf', 30)
+        self.level = 1
+
+        self.p1HealthImage = pygame.image.load("pics\health.png")
+        self.p1HealthImage = pygame.transform.scale(self.p1HealthImage, (60, 60))
+        self.p1HealthImageRect = self.p1HealthImage.get_rect(center=(self.width - 40, 150))
+
+        self.p1TomsImage = pygame.image.load("pics\omatoAmmo.png")
+        self.p1TomsImage = pygame.transform.scale(self.p1TomsImage, (50, 50))
+        self.p1TomsImageRect = self.p1TomsImage.get_rect(center=(self.width - 40, self.height - 120))
+
+        self.p1Toms = pygame.image.load("pics\infinity.png")
+        self.p1Toms = pygame.transform.scale(self.p1Toms, (36,36))
+        self.p1TomsRect = self.p1Toms.get_rect(center=(self.width-40, self.height - 120))
+
+
+
     def initializeBoard(self):
         self.wallsGroup.empty()
         self.floorGroup.empty()
@@ -82,11 +101,26 @@ class PygameGame(object):
     def startGame(self):
         self.isMenu = False
         self.isPaused = False
+        self.isInstr = False
+
+    def instrScreen(self):
+        self.isMenu = False
+        self.isPaused = False
+        self.isInstr = True
+
+    def menuScreen(self):
+        self.isMenu = True
+        self.isPaused = False
+        self.isInstr = False
+
+    def pauseScreen(self):
+        self.isMenu = False
+        self.isPaused = True
+        self.isInstr = False
 
 
 
-
-    def mousePressed(self, x, y):
+    def mousePressed(self, x, y,):
         if self.isMenu:
             if self.startBut.clickCheck(x,y):
                 self.startGame()
@@ -95,17 +129,20 @@ class PygameGame(object):
                 pygame.quit()
 
             elif self.instrBut.clickCheck(x,y):
-                pass
+                self.instrScreen()
 
         elif self.isPaused:
             pass
 
-        else:
+        elif self.isInstr:
+            pass
+        # TODO Create Instruction Screen and Pause Screen for MVP
 
-            if self.player1.rect != None:
-                self.shotAngle = misc.getAngle(self.player1.centerX, self.player1.centerY, x, y)
-                bullet = projectile.Projectile(self.player1.centerX,self.player1.centerY,self.shotAngle)
-                self.bulletsGroup.add(bullet)
+        else:
+            self.shotAngle = misc.getAngle(self.player1.centerX, self.player1.centerY, x, y)
+            bullet = projectile.Projectile(self.player1.centerX,self.player1.centerY,self.shotAngle)
+            self.bulletsGroup.add(bullet)
+
 
 
     def mouseReleased(self, x, y):
@@ -118,6 +155,9 @@ class PygameGame(object):
             self.instrBut.mouseCheck(x,y)
 
         elif self.isPaused:
+            pass
+
+        elif self.isInstr:
             pass
         else:
 
@@ -194,7 +234,7 @@ class PygameGame(object):
                 self.player1.isRight, self.player1.isLookRight = True, True
                 self.player1.velocity[0] = self.player1.speed
 
-            self.timer += 1
+
             self.playerGroup.update(self.wallsGroup)
 
 
@@ -258,14 +298,13 @@ class PygameGame(object):
             self.bulletsGroup.update()
             self.enemyGroup.update()
 
+
+            self.timer += 1
             if self.timer % 200 == 50:
                 x = random.randint(100, 400)
                 y = random.randint(100, 400)
                 enemy = enemies.Chaser(x,y)
                 self.enemyGroup.add(enemy)
-
-
-
 
 
     def redrawAll(self, screen):
@@ -280,27 +319,50 @@ class PygameGame(object):
         elif self.isPaused:
             pass
 
+        elif self.isInstr:
+            pass
+
         else:
-            # draws walls and floor
-            pygame.sprite.Group.draw(self.wallsGroup,screen)
-            pygame.sprite.Group.draw(self.floorGroup,screen)
+            # setting up map attributes on screen
+            self.currRoom = self.font.render("Rm:" + str(self.room), True, (255, 0, 0))
+            self.currRoomRect = self.currRoom.get_rect(center=(self.width - 43, 50))
+
+            self.currLevel = self.font.render("Lvl:" + str(self.level), True, (255, 0, 0))
+            self.currLevelRect = self.currLevel.get_rect(center=(self.width - 43, 100))
+
+            # setting up player attributes on screen
+            self.p1Health1 = pygame.Surface((80,20))
+            self.p1Health1.fill((255,255,255))
+            self.p1Health2 = pygame.Surface((7.6*self.player1.currHealth,16))
+            self.p1Health2.fill((255,0,0))
+            self.p1Health1Rect = self.p1Health1.get_rect(center=(self.width - 43, 150))
+            self.p1Health2Rect = self.p1Health2.get_rect()
+            self.p1Health2Rect.x, self.p1Health2Rect.y = self.p1Health1Rect.x+2, self.p1Health1Rect.y+2
+
+
+            # draws map
+            pygame.sprite.Group.draw(self.wallsGroup, screen)
+            pygame.sprite.Group.draw(self.floorGroup, screen)
+            screen.blit(self.currRoom,self.currRoomRect)
+            screen.blit(self.currLevel,self.currLevelRect)
 
             #draws player
             self.player1.preDraw()
             pygame.sprite.Group.draw(self.playerGroup,screen)
-
+            screen.blit(self.p1HealthImage,self.p1HealthImageRect)
+            screen.blit(self.p1TomsImage,self.p1TomsImageRect)
+            screen.blit(self.p1Health1, self.p1Health1Rect)
+            screen.blit(self.p1Health2, self.p1Health2Rect)
+            screen.blit(self.p1Toms, self.p1TomsRect)
             # checks collisions between sprite groups
-            pygame.sprite.groupcollide(self.bulletsGroup, self.enemyGroup, True, False)
+            pygame.sprite.groupcollide(self.bulletsGroup, self.enemyGroup, False, False)
             for bullet in self.bulletsGroup:
                 hitEnemies = pygame.sprite.spritecollide(bullet,self.enemyGroup,False)
-                print(hitEnemies)
                 for enemy in hitEnemies:
-                    print("hoopla1")
                     enemy.health -= bullet.power
+                    bullet.kill()
                     if enemy.health <= 0:
                         enemy.kill()
-                        print("hoopla2")
-
 
             pygame.sprite.groupcollide(self.bulletsGroup, self.wallsGroup,True,False)
 
@@ -309,6 +371,10 @@ class PygameGame(object):
 
             #draws enemies
             pygame.sprite.Group.draw(self.enemyGroup, screen)
+
+
+
+
 
 
 

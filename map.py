@@ -191,20 +191,6 @@ def makeBoard(board, obstacles):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class WallTop(pygame.sprite.Sprite):
     def __init__(self,x,y,width,height):
         pygame.sprite.Sprite.__init__(self)

@@ -14,7 +14,7 @@ class Chaser(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.speed = 3
         self.attackRadius = 200
-        self.health = 3
+        self.health = 0
         self.image = pygame.image.load("pics\chaser.png")
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
