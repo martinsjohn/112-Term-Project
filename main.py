@@ -28,6 +28,7 @@ class PygameGame(object):
         self.isMenu = True
         self.isPaused = False
         self.isInstr = False
+        self.gameOver = False
 
         #Sprite Groups
         self.playerGroup = pygame.sprite.Group()
@@ -61,6 +62,9 @@ class PygameGame(object):
         # Initializations for game data
         self.font = pygame.font.Font('font\coolFont.ttf', 30)
         self.level = 1
+        self.roomDead = {0: True}
+        self.enemiesLeft = 0
+
 
         self.p1HealthImage = pygame.image.load("pics\health.png")
         self.p1HealthImage = pygame.transform.scale(self.p1HealthImage, (60, 60))
@@ -79,24 +83,69 @@ class PygameGame(object):
     def initializeBoard(self):
         self.wallsGroup.empty()
         self.floorGroup.empty()
+        width = self.width // len(self.currBoard)
+        height = self.height // len(self.currBoard)
         for i in range(len(self.currBoard)):
             for j in range(len(self.currBoard)):
-                width = self.width//len(self.currBoard)
-                height = self.height//len(self.currBoard)
                 x = j * (width)
                 y = i * (height)
-                if self.currBoard[i][j] == 2:
-                    wallTop = map.WallTop(x,y,width,height)
-                    self.wallsGroup.add(wallTop)
-                elif self.currBoard[i][j] == 1:
+                if self.currBoard[i][j] == 1:
                     wallSide = map.WallSide(x,y,width,height)
                     self.wallsGroup.add(wallSide)
-                else:
+                elif self.currBoard[i][j] == 0 or self.currBoard[i][j] == 3:
                     floor = map.Floor(x,y,width,height)
                     self.floorGroup.add(floor)
+                elif self.currBoard[i][j] == 9 and self.roomDead[self.room] == False:
+                    enemy = enemies.Chaser(x,y)
+                    self.enemyGroup.add(enemy)
+                    self.enemiesLeft += 1
+                elif self.currBoard[i][j] == 5 and self.roomDead[self.room] == False:
+                    enemy = enemies.OnionBoss(x,y)
+                    self.enemyGroup.add(enemy)
+                    self.enemiesLeft += 1
+        for wall in self.wallsGroup:
+            stuckEnemies = pygame.sprite.spritecollide(wall, self.enemyGroup,True)
+            if stuckEnemies:
+                self.enemiesLeft -= len(stuckEnemies)
 
 
+        if self.room == 0:
+            wall1 = map.WallTop(2*width,2*height,14*width, height)
+            wall2 = map.WallTop(2*width,3*height,width, 13*height)
+            wall3 = map.WallTop(2*width,16*height,14*width,height)
+            wall4 = map.WallTop(15*width,3*height,width,3*height)
+            wall5 = map.WallTop(15*width,6*height,4*width,height)
+            wall6 = map.WallTop(15*width, 12*height,4*width,height)
+            wall7 = map.WallTop(15*width,13*height,width,3*height)
+            lst = [wall1,wall2,wall3,wall4,wall5,wall6,wall7]
+            for wall in lst:
+                self.wallsGroup.add(wall)
 
+        elif 0 < self.room < 4:
+            wall1 = map.WallTop(2*width,0*height,15*width, height)
+            wall2 = map.WallTop(2*width,1*height,width,5*height)
+            wall3 = map.WallTop(0*width,6*height,3*width,height)
+            wall4 = map.WallTop(0*width, 12*height, 3*width,height)
+            wall5 = map.WallTop(2*width,13*height,width,5*height)
+            wall6 = map.WallTop(2*width, 18*height, 15*width,height)
+            wall7 = map.WallTop(16*width,1*height,width,5*height)
+            wall8 = map.WallTop(16*width,6*height,3*width,height)
+            wall9 = map.WallTop(16*width,12*height,3*width,height)
+            wall10 = map.WallTop(16*width,13*height,width,5*height)
+            lst = [wall1,wall2,wall3,wall4,wall5,wall6,wall7,wall8,wall9,wall10]
+            for wall in lst:
+                self.wallsGroup.add(wall)
+        else:
+            wall1 = map.WallTop(3*width,0*height, 16*width,height)
+            wall2 = map.WallTop(3*width, 1*height, width, 5*height)
+            wall3 = map.WallTop(0*width, 6*height, 4*width,height)
+            wall4 = map.WallTop(0*width, 12*height,4*width,height)
+            wall5 = map.WallTop(3*width, 13*height,width, 5*height)
+            wall6 = map.WallTop(3*width, 18*height, 16*width,height)
+            wall7 = map.WallTop(18*width, 0*height, width, 19*height)
+            lst = [wall1,wall2,wall3,wall4,wall5,wall6,wall7]
+            for wall in lst:
+                self.wallsGroup.add(wall)
 
     def startGame(self):
         self.isMenu = False
@@ -140,7 +189,7 @@ class PygameGame(object):
 
         else:
             self.shotAngle = misc.getAngle(self.player1.centerX, self.player1.centerY, x, y)
-            bullet = projectile.Projectile(self.player1.centerX,self.player1.centerY,self.shotAngle)
+            bullet = projectile.OnionBullet(self.player1.centerX,self.player1.centerY,self.shotAngle)
             self.bulletsGroup.add(bullet)
 
 
@@ -206,6 +255,7 @@ class PygameGame(object):
     def timerFired(self, dt):
         keyCode = pygame.key.get_pressed()
 
+
         if self.isMenu:
             pass
 
@@ -239,72 +289,78 @@ class PygameGame(object):
 
 
             if self.player1.centerX >= self.width:
-                self.room += 1
-                if self.room < 4:
-                    if self.room > len(self.boardList) - 1:
-                        newBoard = map.makeBoard(copy.deepcopy(map.mainBoard),map.obstacles)
-                        self.boardList.append(newBoard)
+                if self.roomDead[self.room] == True:
 
-                elif self.room ==4:
-                    if self.room > len(self.boardList) - 1:
-                        self.boardList.append(map.bossBoard)
+                    self.room += 1
+                    if self.room < 4:
+                        if self.room > len(self.boardList) - 1:
+                            newBoard = map.makeBoard(copy.deepcopy(map.mainBoard),map.obstacles)
+                            self.boardList.append(newBoard)
 
-                self.currBoard = self.boardList[self.room]
-                self.initializeBoard()
-                self.player1.x = 0
-                self.player1.y = self.height//2
+                    elif self.room ==4:
+                        if self.room > len(self.boardList) - 1:
+                            self.boardList.append(map.bossBoard)
+
+                    enemiesDead = self.roomDead.get(self.room, None)
+                    if enemiesDead == None:
+                        self.roomDead[self.room] = False
+                    self.currBoard = self.boardList[self.room]
+                    self.initializeBoard()
+                    self.player1.x = 0
+                    self.player1.y = self.height//2
+                else:
+                    self.player1.centerX = self.width
 
             elif self.player1.centerX <= 0:
-                self.room -= 1
-                self.currBoard = self.boardList[self.room]
-                self.initializeBoard()
-                self.player1.x = self.width - self.player1.rect.width
-                self.player1.y = self.height//2
-
-
-
-
-
-            '''
-            if pygame.sprite.groupcollide(self.playerGroup, self.wallsGroup, False, False):
-                wall = pygame.sprite.spritecollideany(self.player1, self.wallsGroup)
-                halfPlayerH = self.player1.rect.height//2
-                halfPlayerW = self.player1.rect.width//2
-                tY = self.player1.y - self.player1.rect.height//2
-                tX = self.player1.x - self.player1.rect.width//2
-                bY = self.player1.y + self.player1.rect.height//2
-                bX = self.player1.x + self.player1.rect.width//2
-                wtY = wall.rect.y
-                wtX = wall.rect.x
-                wbY = wall.rect.y + wall.rect.height
-                wbX = wall.rect.x + wall.rect.width
-
-
-                if tY < wbY and bY > wbY:
-                    self.player1.y = wbY + halfPlayerH
-                elif tY < wtY and bY > wtY:
-                    self.player1.y = wtY - halfPlayerH
-                elif tX < wbX and bX > wbX:
-                    self.player1.x = wbX + halfPlayerW +1
-                elif tX < wtX and bX > wtX:
-                    self.player1.x = wtX - 2*halfPlayerW -1
-            '''
+                if self.roomDead[self.room] == True:
+                    self.room -= 1
+                    self.currBoard = self.boardList[self.room]
+                    self.initializeBoard()
+                    self.player1.x = self.width - self.player1.rect.width
+                    self.player1.y = self.height//2
+                else:
+                    self.player1.centerX = 0
 
 
             for enemy in self.enemyGroup:
                 if isinstance(enemy, enemies.Chaser):
                     enemy.chase((self.player1.centerX, self.player1.centerY))
+                if pygame.sprite.spritecollide(enemy,self.wallsGroup,False) or enemy.rect.x < 0 \
+                                                or enemy.rect.x > self.width:
+                    enemy.switchDir()
+
+
+            # checks collisions between sprite groups
+            pygame.sprite.groupcollide(self.bulletsGroup, self.enemyGroup, False, False)
+            for bullet in self.bulletsGroup:
+                hitEnemies = pygame.sprite.spritecollide(bullet, self.enemyGroup, False)
+                for enemy in hitEnemies:
+                    enemy.health -= bullet.power
+                    bullet.kill()
+                    if enemy.health <= 0:
+                        enemy.kill()
+                        self.enemiesLeft -= 1
+
+            pygame.sprite.groupcollide(self.bulletsGroup, self.wallsGroup, True, False)
+            if self.enemiesLeft <= 0:
+                self.roomDead[self.room] = True
+
+            hitPlayer = pygame.sprite.spritecollide(self.player1,self.enemyGroup,False)
+            if hitPlayer:
+                self.player1.currHealth -= 0.01 * len(hitPlayer)
+
+            if self.player1.currHealth <= 0.01:
+                self.player1.kill()
+                self.gameOver = True
+                self.run()
 
             self.bulletsGroup.update()
             self.enemyGroup.update()
 
 
-            self.timer += 1
-            if self.timer % 200 == 50:
-                x = random.randint(100, 400)
-                y = random.randint(100, 400)
-                enemy = enemies.Chaser(x,y)
-                self.enemyGroup.add(enemy)
+
+
+
 
 
     def redrawAll(self, screen):
@@ -354,17 +410,6 @@ class PygameGame(object):
             screen.blit(self.p1Health1, self.p1Health1Rect)
             screen.blit(self.p1Health2, self.p1Health2Rect)
             screen.blit(self.p1Toms, self.p1TomsRect)
-            # checks collisions between sprite groups
-            pygame.sprite.groupcollide(self.bulletsGroup, self.enemyGroup, False, False)
-            for bullet in self.bulletsGroup:
-                hitEnemies = pygame.sprite.spritecollide(bullet,self.enemyGroup,False)
-                for enemy in hitEnemies:
-                    enemy.health -= bullet.power
-                    bullet.kill()
-                    if enemy.health <= 0:
-                        enemy.kill()
-
-            pygame.sprite.groupcollide(self.bulletsGroup, self.wallsGroup,True,False)
 
             #draws bullets
             pygame.sprite.Group.draw(self.bulletsGroup, screen)

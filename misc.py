@@ -39,6 +39,11 @@ def getAngle(startX,startY,destX,destY):
             angle = math.pi - angle
     return angle
 
+def inRect(checkP,rectP):
+
+    if rectP[0] < checkP[0] < rectP[2] and rectP[1] < checkP[1] < rectP[3]:
+        return True
+    return False
 
 
 class Button(object):

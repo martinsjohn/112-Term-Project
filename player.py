@@ -14,6 +14,8 @@ Description: Defines the Player class containing all attributes of the player
 
 import pygame
 import playerImages   #stores information for player images and animation
+import misc
+
 
 # sets player class with player attributes
 class Player(pygame.sprite.Sprite):
@@ -48,48 +50,100 @@ class Player(pygame.sprite.Sprite):
         self.walkingL = [self.picsRev[1], self.picsRev[2], self.picsRev[3], self.picsRev[4]]
 
 
-    def hitTop(self,wall):
-        if self.rect.y < wall.rect.y + wall.rect.height:
-            if self.rect.y + self.rect.height > wall.rect.y + wall.rect.height:
-                return True
+    def hitTop(self,wallPoints):
+        if misc.inRect((self.rect.x,self.rect.y),wallPoints):
+            if misc.inRect((self.rect.x+self.rect.width,self.rect.y),wallPoints):
+                if not misc.inRect((self.rect.x,self.rect.y+self.rect.height),wallPoints):
+                    if not misc.inRect((self.rect.x+self.rect.height,self.rect.y+self.rect.height),wallPoints):
+                        return True
         return False
 
 
-    def hitBottom(self,wall):
-        pass
+    def hitBottom(self,wallPoints):
+        if not misc.inRect((self.rect.x,self.rect.y),wallPoints):
+            if not misc.inRect((self.rect.x+self.rect.width,self.rect.y),wallPoints):
+                if misc.inRect((self.rect.x,self.rect.y+self.rect.height),wallPoints):
+                    if misc.inRect((self.rect.x+self.rect.height,self.rect.y+self.rect.height),wallPoints):
+                        return True
+        return False
 
-    def hitLeft(self,wall):
-        pass
+    def hitLeft(self,wallPoints):
+        if misc.inRect((self.rect.x,self.rect.y),wallPoints):
+            if not misc.inRect((self.rect.x+self.rect.width,self.rect.y),wallPoints):
+                if misc.inRect((self.rect.x,self.rect.y+self.rect.height),wallPoints):
+                    if not misc.inRect((self.rect.x+self.rect.height,self.rect.y+self.rect.height),wallPoints):
+                        return True
+        return False
 
-    def hitRight(self,wall):
-        pass
-
+    def hitRight(self,wallPoints):
+        if not misc.inRect((self.rect.x,self.rect.y),wallPoints):
+            if misc.inRect((self.rect.x+self.rect.width,self.rect.y),wallPoints):
+                if not misc.inRect((self.rect.x,self.rect.y+self.rect.height),wallPoints):
+                    if misc.inRect((self.rect.x+self.rect.height,self.rect.y+self.rect.height),wallPoints):
+                        return True
+        return False
 
     def update(self,walls):
         self.x += self.velocity[0]
         self.y += self.velocity[1]
         hitWalls = pygame.sprite.spritecollide(self,walls,False)
         for wall in hitWalls:
+            wx1 = wall.rect.x
+            wy1 = wall.rect.y
+            wx2 = wall.rect.x + wall.rect.width
+            wy2 = wall.rect.y + wall.rect.height
+            wallPoints = (wx1,wy1,wx2,wy2)
+
             # if moving left, make right side of wall the boundary
             if self.velocity[0] < 0 and self.velocity[1] == 0:
-                self.x = wall.rect.x + wall.rect.width
+                self.x = wall.rect.x + wall.rect.width + 1
             # if moving right, make left side of wall the boundary
             elif self.velocity[0] > 0 and self.velocity[1] == 0:
-                self.x = wall.rect.x - self.rect.width
+                self.x = wall.rect.x - self.rect.width - 1
 
             # if moving up, make bottom of wall the boundary
             elif self.velocity[1] < 0 and self.velocity[0] == 0:
-                self.y = wall.rect.y + wall.rect.height
+                self.y = wall.rect.y + wall.rect.height + 1
 
             # if moving down, make top of wall the boundary
             elif self.velocity[1] > 0 and self.velocity[0] == 0:
-                self.y = wall.rect.y - self.rect.height
+                self.y = wall.rect.y - self.rect.height - 1
 
             elif self.velocity[0] > 0 and self.velocity[1] < 0:
-                if self.hitTop(wall):
-                    print("NNNNN")
-                    self.y = wall.rect.y + wall.rect.height
+                if self.hitTop(wallPoints):
+                    print("TWD")
+                    self.y = wall.rect.y + wall.rect.height + 1
                     self.velocity[1] = -.001
+                elif self.hitRight(wallPoints):
+                    print("RWD")
+                    self.x = wall.rect.x - self.rect.width - 1
+                    self.velocity[0] = -.001
+            elif self.velocity[0] < 0 and self.velocity[1] < 0:
+                if self.hitTop(wallPoints):
+                    print("TWA")
+                    self.y = wall.rect.y+wall.rect.height + 1
+                    self.velocity[1] = -.001
+                elif self.hitLeft(wallPoints):
+                    print("LWA")
+                    self.x = wall.rect.x + wall.rect.width - 1
+            elif self.velocity[0] > 0 and self.velocity[1] > 0:
+                if self.hitBottom(wallPoints):
+                    print("BSD")
+                    self.y = wall.rect.y - self.rect.height - 1
+                    self.velocity[1] = .001
+                elif self.hitRight(wallPoints):
+                    print("RSD")
+                    self.x = wall.rect.x - self.rect.width - 1
+                    self.velocity[0] = .001
+            elif self.velocity[0] < 0 and self.velocity[1] > 0:
+                if self.hitBottom(wallPoints):
+                    print("BSA")
+                    self.y = wall.rect.y - self.rect.height - 1
+                    self.velocity[1] = .001
+                elif self.hitLeft(wallPoints):
+                    print("LSA")
+                    self.x = wall.rect.x + wall.rect.width + 1
+                    self.velocity[0] = .001
 
 
 
