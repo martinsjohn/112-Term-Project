@@ -25,6 +25,7 @@ class Player(pygame.sprite.Sprite):
         self.y = y
         self.speed = 4
         self.velocity = [0,0]
+        self. currVelocity = None
         self.isLookLeft = False
         self.isLeft = False
         self.isLookRight = True
@@ -84,8 +85,27 @@ class Player(pygame.sprite.Sprite):
         return False
 
     def update(self,walls):
+
         self.x += self.velocity[0]
         self.y += self.velocity[1]
+        '''
+
+        if pygame.sprite.spritecollideany(self,walls) == None:
+            self.currVelocity = self.velocity
+
+        else:
+            currVel = self.velocity
+            print(self.currVelocity, "hhhhh")
+            print(currVel)
+            if currVel != self.currVelocity or (currVel[0] != self.currVelocity[0] and currVel[1] == 0) \
+                    or (currVel[1] != self.currVelocity[1] and currVel[0] == 0):
+                pass
+            else:
+                self.x -= self.velocity[0]
+                self.y -= self.velocity[1]
+
+
+        '''
         hitWalls = pygame.sprite.spritecollide(self,walls,False)
         for wall in hitWalls:
             wx1 = wall.rect.x
@@ -111,37 +131,29 @@ class Player(pygame.sprite.Sprite):
 
             elif self.velocity[0] > 0 and self.velocity[1] < 0:
                 if self.hitTop(wallPoints):
-                    print("TWD")
                     self.y = wall.rect.y + wall.rect.height + 1
                     self.velocity[1] = -.001
                 elif self.hitRight(wallPoints):
-                    print("RWD")
                     self.x = wall.rect.x - self.rect.width - 1
                     self.velocity[0] = -.001
             elif self.velocity[0] < 0 and self.velocity[1] < 0:
                 if self.hitTop(wallPoints):
-                    print("TWA")
                     self.y = wall.rect.y+wall.rect.height + 1
                     self.velocity[1] = -.001
                 elif self.hitLeft(wallPoints):
-                    print("LWA")
                     self.x = wall.rect.x + wall.rect.width - 1
             elif self.velocity[0] > 0 and self.velocity[1] > 0:
                 if self.hitBottom(wallPoints):
-                    print("BSD")
                     self.y = wall.rect.y - self.rect.height - 1
                     self.velocity[1] = .001
                 elif self.hitRight(wallPoints):
-                    print("RSD")
                     self.x = wall.rect.x - self.rect.width - 1
                     self.velocity[0] = .001
             elif self.velocity[0] < 0 and self.velocity[1] > 0:
                 if self.hitBottom(wallPoints):
-                    print("BSA")
                     self.y = wall.rect.y - self.rect.height - 1
                     self.velocity[1] = .001
                 elif self.hitLeft(wallPoints):
-                    print("LSA")
                     self.x = wall.rect.x + wall.rect.width + 1
                     self.velocity[0] = .001
 

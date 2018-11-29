@@ -19,6 +19,7 @@ import map
 import misc
 import copy
 import random
+import math
 
 
 class PygameGame(object):
@@ -37,6 +38,7 @@ class PygameGame(object):
         self.obstaclesGroup = pygame.sprite.Group()
         self.wallsGroup = pygame.sprite.Group()
         self.floorGroup = pygame.sprite.Group()
+        self.powerUpGroup = pygame.sprite.Group()
 
         # Initializations for menu screen
         self.startBut = misc.Button((self.width//2 - 75, 4*self.height//7,150,75),"Start!")
@@ -51,7 +53,9 @@ class PygameGame(object):
         self.player1.preDraw()
         self.playerGroup.add(self.player1)
         self.shotAngle = 0
-        self.timer = 0
+        self.currPowerUp = None
+        self.powerUps = [misc.CircleShot, misc.Invincibility, misc.Health, misc.Speed, misc.Strength]
+        self.puTimer = 0
 
         # Initializations for the map
         self.boardList = [map.startBoard]
@@ -95,7 +99,7 @@ class PygameGame(object):
                 elif self.currBoard[i][j] == 0 or self.currBoard[i][j] == 3:
                     floor = map.Floor(x,y,width,height)
                     self.floorGroup.add(floor)
-                elif self.currBoard[i][j] == 9 and self.roomDead[self.room] == False:
+                elif self.currBoard[i][j] == 4 and self.roomDead[self.room] == False:
                     enemy = enemies.Chaser(x,y)
                     self.enemyGroup.add(enemy)
                     self.enemiesLeft += 1
@@ -170,6 +174,7 @@ class PygameGame(object):
 
 
     def mousePressed(self, x, y,):
+
         if self.isMenu:
             if self.startBut.clickCheck(x,y):
                 self.startGame()
@@ -185,12 +190,19 @@ class PygameGame(object):
 
         elif self.isInstr:
             pass
-        # TODO Create Instruction Screen and Pause Screen for MVP
+        # TODO Create Instruction Screen and Pause Screen
 
         else:
             self.shotAngle = misc.getAngle(self.player1.centerX, self.player1.centerY, x, y)
-            bullet = projectile.OnionBullet(self.player1.centerX,self.player1.centerY,self.shotAngle)
-            self.bulletsGroup.add(bullet)
+
+            if self.currPowerUp == misc.CircleShot:
+                for i in range(8):
+                    bullet = projectile.TomatoBullet(self.player1.centerX, self.player1.centerY,self.shotAngle+(i/4*math.pi))
+                    self.bulletsGroup.add(bullet)
+            else:
+
+                bullet = projectile.TomatoBullet(self.player1.centerX,self.player1.centerY,self.shotAngle)
+                self.bulletsGroup.add(bullet)
 
 
 
@@ -254,6 +266,14 @@ class PygameGame(object):
 
     def timerFired(self, dt):
         keyCode = pygame.key.get_pressed()
+        if self.currPowerUp != None:
+            self.puTimer += 1
+            if self.puTimer % 500 == 0:
+                self.currPowerUp = None
+        else:
+            self.puTimer = 0
+
+
 
 
         if self.isMenu:
@@ -338,12 +358,23 @@ class PygameGame(object):
                     enemy.health -= bullet.power
                     bullet.kill()
                     if enemy.health <= 0:
+                        int = random.randint(28,30)
+                        if int == 30:
+                            pu = random.choice(self.powerUps) # TODO change so that puTImer only runs when power up is picked up and find way to display power up with time left on screen!
+                            powerUp = pu(enemy.rect.center[0],enemy.rect.center[1])
+                            self.powerUpGroup.add(powerUp)
                         enemy.kill()
                         self.enemiesLeft -= 1
 
             pygame.sprite.groupcollide(self.bulletsGroup, self.wallsGroup, True, False)
             if self.enemiesLeft <= 0:
                 self.roomDead[self.room] = True
+
+
+            if pygame.sprite.groupcollide(self.playerGroup, self.powerUpGroup,False,True):
+                self.powerUp = True
+
+
 
             hitPlayer = pygame.sprite.spritecollide(self.player1,self.enemyGroup,False)
             if hitPlayer:
@@ -356,10 +387,6 @@ class PygameGame(object):
 
             self.bulletsGroup.update()
             self.enemyGroup.update()
-
-
-
-
 
 
 
@@ -383,7 +410,7 @@ class PygameGame(object):
             self.currRoom = self.font.render("Rm:" + str(self.room), True, (255, 0, 0))
             self.currRoomRect = self.currRoom.get_rect(center=(self.width - 43, 50))
 
-            self.currLevel = self.font.render("Lvl:" + str(self.level), True, (255, 0, 0))
+            self.currLevel = self.font.render("Lvl:" + str(self.puTimer//50), True, (255, 0, 0))
             self.currLevelRect = self.currLevel.get_rect(center=(self.width - 43, 100))
 
             # setting up player attributes on screen
@@ -417,8 +444,8 @@ class PygameGame(object):
             #draws enemies
             pygame.sprite.Group.draw(self.enemyGroup, screen)
 
-
-
+            #draws powerUps
+            pygame.sprite.Group.draw(self.powerUpGroup, screen)
 
 
 

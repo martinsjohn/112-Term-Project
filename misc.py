@@ -78,3 +78,39 @@ class Button(object):
 
 
 
+
+
+
+
+class PowerUp(pygame.sprite.Sprite):
+    def __init__(self,x,y,image = None):
+        pygame.sprite.Sprite.__init__(self)
+        self.x = x
+        self.y = y
+        self.image = image
+        self.image = pygame.transform.scale(self.image,(50,50))
+        self.rect = self.image.get_rect()
+        self.rect.center =(x,y)
+
+class CircleShot(PowerUp):
+    def __init__(self,x,y,image = pygame.image.load("pics\circleShot.png")):
+        super().__init__(x,y,image)
+
+class Invincibility(PowerUp):
+    def __init__(self,x,y,image = pygame.image.load("pics\invincibility.png")):
+        super().__init__(x,y,image)
+
+class Speed(PowerUp):
+    def __init__(self,x,y,image = pygame.image.load("pics\speed.png")):
+        super().__init__(x,y,image)
+
+class Strength(PowerUp):
+    def __init__(self,x,y,image = pygame.image.load("pics\strength.png")):
+        super().__init__(x,y,image)
+
+class Health(PowerUp):
+    def __init__(self,x,y,image = pygame.image.load("pics\health.png")):
+        super().__init__(x,y,image)
+
+
+
