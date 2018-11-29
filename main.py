@@ -33,7 +33,8 @@ class PygameGame(object):
 
         #Sprite Groups
         self.playerGroup = pygame.sprite.Group()
-        self.bulletsGroup = pygame.sprite.Group()
+        self.playerBulletsGroup = pygame.sprite.Group()
+        self.enemyBulletsGroup = pygame.sprite.Group()
         self.enemyGroup = pygame.sprite.Group()
         self.obstaclesGroup = pygame.sprite.Group()
         self.wallsGroup = pygame.sprite.Group()
@@ -55,7 +56,7 @@ class PygameGame(object):
         self.shotAngle = 0
         self.currPowerUp = None
         self.powerUps = [misc.CircleShot, misc.Invincibility, misc.Health, misc.Speed, misc.Strength]
-        self.puTimer = 0
+        self.puTimer = 500
 
         # Initializations for the map
         self.boardList = [map.startBoard]
@@ -195,14 +196,14 @@ class PygameGame(object):
         else:
             self.shotAngle = misc.getAngle(self.player1.centerX, self.player1.centerY, x, y)
 
-            if self.currPowerUp == misc.CircleShot:
+            if isinstance(self.currPowerUp,misc.CircleShot):
                 for i in range(8):
                     bullet = projectile.TomatoBullet(self.player1.centerX, self.player1.centerY,self.shotAngle+(i/4*math.pi))
-                    self.bulletsGroup.add(bullet)
+                    self.playerBulletsGroup.add(bullet)
             else:
 
                 bullet = projectile.TomatoBullet(self.player1.centerX,self.player1.centerY,self.shotAngle)
-                self.bulletsGroup.add(bullet)
+                self.playerBulletsGroup.add(bullet)
 
 
 
@@ -267,11 +268,9 @@ class PygameGame(object):
     def timerFired(self, dt):
         keyCode = pygame.key.get_pressed()
         if self.currPowerUp != None:
-            self.puTimer += 1
-            if self.puTimer % 500 == 0:
+            self.puTimer -= 1
+            if self.puTimer == 0:
                 self.currPowerUp = None
-        else:
-            self.puTimer = 0
 
 
 
@@ -351,8 +350,8 @@ class PygameGame(object):
 
 
             # checks collisions between sprite groups
-            pygame.sprite.groupcollide(self.bulletsGroup, self.enemyGroup, False, False)
-            for bullet in self.bulletsGroup:
+            pygame.sprite.groupcollide(self.playerBulletsGroup, self.enemyGroup, False, False)
+            for bullet in self.playerBulletsGroup:
                 hitEnemies = pygame.sprite.spritecollide(bullet, self.enemyGroup, False)
                 for enemy in hitEnemies:
                     enemy.health -= bullet.power
@@ -366,13 +365,17 @@ class PygameGame(object):
                         enemy.kill()
                         self.enemiesLeft -= 1
 
-            pygame.sprite.groupcollide(self.bulletsGroup, self.wallsGroup, True, False)
+            pygame.sprite.groupcollide(self.playerBulletsGroup, self.wallsGroup, True, False)
             if self.enemiesLeft <= 0:
                 self.roomDead[self.room] = True
 
 
-            if pygame.sprite.groupcollide(self.playerGroup, self.powerUpGroup,False,True):
-                self.powerUp = True
+            hitPU = pygame.sprite.spritecollide(self.player1, self.powerUpGroup,False)
+            if hitPU:
+                self.currPowerUp = hitPU[0]
+                hitPU[0].kill()
+                self.puTimer = 500
+                print(self.currPowerUp)
 
 
 
@@ -385,7 +388,7 @@ class PygameGame(object):
                 self.gameOver = True
                 self.run()
 
-            self.bulletsGroup.update()
+            self.playerBulletsGroup.update()
             self.enemyGroup.update()
 
 
@@ -408,10 +411,17 @@ class PygameGame(object):
         else:
             # setting up map attributes on screen
             self.currRoom = self.font.render("Rm:" + str(self.room), True, (255, 0, 0))
-            self.currRoomRect = self.currRoom.get_rect(center=(self.width - 43, 50))
+            self.currRoomRect = self.currRoom.get_rect(center=(self.width - 43, 100))
 
-            self.currLevel = self.font.render("Lvl:" + str(self.puTimer//50), True, (255, 0, 0))
-            self.currLevelRect = self.currLevel.get_rect(center=(self.width - 43, 100))
+            self.currLevel = self.font.render("Lvl:" + str(self.level), True, (255, 0, 0))
+            self.currLevelRect = self.currLevel.get_rect(center=(self.width - 43, 75))
+
+            if self.currPowerUp != None:
+                puttX = self.width - 43
+                puttY = 37
+
+                self.puTimerText = self.font.render(str(self.puTimer//50),True,(255,255,255))
+                self.puTimerTextRect = self.puTimerText.get_rect(center = (puttX,puttY))
 
             # setting up player attributes on screen
             self.p1Health1 = pygame.Surface((80,20))
@@ -439,13 +449,21 @@ class PygameGame(object):
             screen.blit(self.p1Toms, self.p1TomsRect)
 
             #draws bullets
-            pygame.sprite.Group.draw(self.bulletsGroup, screen)
+            pygame.sprite.Group.draw(self.playerBulletsGroup, screen)
 
             #draws enemies
             pygame.sprite.Group.draw(self.enemyGroup, screen)
 
             #draws powerUps
             pygame.sprite.Group.draw(self.powerUpGroup, screen)
+            if self.currPowerUp != None:
+                wid = self.currPowerUp.image.get_width()
+                hei = self.currPowerUp.image.get_height()
+                screen.blit(self.currPowerUp.image,(puttX - wid//2,puttY - hei//2,wid,hei))
+                screen.blit(self.puTimerText,self.puTimerTextRect)
+
+
+
 
 
 

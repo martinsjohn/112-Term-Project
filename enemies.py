@@ -34,7 +34,7 @@ class Chaser(pygame.sprite.Sprite):
         yDiff = dY - sY
         self.angle = misc.getAngle(sX,sY,dX,dY)
         if ((xDiff)**2 + (yDiff)**2)**0.5 <= self.attackRadius:
-          self.velocity = [self.speed*math.cos(self.angle),self.speed*-math.sin(self.angle)]
+            self.velocity = [self.speed*math.cos(self.angle),self.speed*-math.sin(self.angle)]
 
         else:
             self.velocity = self.roamVel
@@ -81,6 +81,7 @@ class OnionBoss(pygame.sprite.Sprite):
         xDiff = dX - sX
         yDiff = dY - sY
         self.angle = misc.getAngle(sX, sY, dX, dY)
+
 
 
 

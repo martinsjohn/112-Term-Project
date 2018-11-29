@@ -95,22 +95,31 @@ class PowerUp(pygame.sprite.Sprite):
 class CircleShot(PowerUp):
     def __init__(self,x,y,image = pygame.image.load("pics\circleShot.png")):
         super().__init__(x,y,image)
+        self.image = pygame.transform.scale(image,(50,50))
 
 class Invincibility(PowerUp):
     def __init__(self,x,y,image = pygame.image.load("pics\invincibility.png")):
         super().__init__(x,y,image)
+        self.image = pygame.transform.scale(image,(50,50))
+
 
 class Speed(PowerUp):
     def __init__(self,x,y,image = pygame.image.load("pics\speed.png")):
         super().__init__(x,y,image)
+        self.image = pygame.transform.scale(image,(50,50))
+
 
 class Strength(PowerUp):
     def __init__(self,x,y,image = pygame.image.load("pics\strength.png")):
         super().__init__(x,y,image)
+        self.image = pygame.transform.scale(image,(50,50))
+
 
 class Health(PowerUp):
     def __init__(self,x,y,image = pygame.image.load("pics\health.png")):
         super().__init__(x,y,image)
+        self.image = pygame.transform.scale(image,(50,50))
+
 
 
 
