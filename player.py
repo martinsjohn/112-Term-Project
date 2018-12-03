@@ -52,7 +52,7 @@ class Player(pygame.sprite.Sprite):
         self.walkingR = [self.pics[1], self.pics[2], self.pics[3], self.pics[4]]
         self.walkingL = [self.picsRev[1], self.picsRev[2], self.picsRev[3], self.picsRev[4]]
 
-    #moves player in x direction then
+    #moves player in x direction and checks to see if it has hit a wall, if so, the movement is reverted
     def moveX(self,walls):
         self.x += self.velocity[0]
         self.rect.x = self.x
@@ -66,6 +66,8 @@ class Player(pygame.sprite.Sprite):
             elif self.velocity[0] < 0:
                 self.x = wall.rect.x + wall.rect.width
                 self.rect.x = self.x
+
+    #moves player in y direction and checks to see if it has hit a wall, if so, the movement is reverted
     def moveY(self,walls):
         self.y += self.velocity[1]
         self.rect.y = self.y

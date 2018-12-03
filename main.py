@@ -25,13 +25,8 @@ import math
 class PygameGame(object):
 
     def init(self):
-        #Modes
-        self.isMenu = True
-        self.isPaused = False
-        self.isInstr = False
-        self.gameOver = False
 
-        #Sprite Groups
+        # Sprite Groups
         self.playerGroup = pygame.sprite.Group()
         self.playerBulletsGroup = pygame.sprite.Group()
         self.enemyBulletsGroup = pygame.sprite.Group()
@@ -43,13 +38,6 @@ class PygameGame(object):
         self.powerUpGroup = pygame.sprite.Group()
         self.portalGroup = pygame.sprite.Group()
 
-        # Initializations for menu screen
-        self.startBut = misc.Button((self.width//2 - 75, 4*self.height//7,150,75),"Start!")
-        self.quitBut = misc.Button((self.width//2 - 75, 5*self.height//7,150,75),"Quit!")
-        self.instrBut = misc.Button((self.width//2 - 75, 6*self.height//7,150,75),"Instructions")
-        self.menuBackground = pygame.image.load('pics\menuBackground.png')
-        self.menuBackground = pygame.transform.scale(self.menuBackground, (self.width,self.height))
-        self.menuBackRect = self.menuBackground.get_rect()
 
         # Initializations for the player and enemies
         self.player1 = player.Player(self.width//2, self.height//2)
@@ -85,6 +73,41 @@ class PygameGame(object):
         self.p1Toms = pygame.transform.scale(self.p1Toms, (36,36))
         self.p1TomsRect = self.p1Toms.get_rect(center=(self.width-40, self.height - 120))
 
+        # Modes
+        self.isMenu = True
+        self.isPaused = False
+        self.isInstr = False
+        self.gameOver = False
+
+
+        # Initializations for menu screen
+        self.startBut = misc.Button((self.width // 2 - 75, 4 * self.height // 7, 150, 75), "Start!")
+        self.quitBut = misc.Button((self.width // 2 - 75, 5 * self.height // 7, 150, 75), "Quit!")
+        self.instrBut = misc.Button((self.width // 2 - 75, 6 * self.height // 7, 150, 75), "Instructions")
+        self.menuBackground = pygame.image.load('pics\menuBackground.png')
+        self.menuBackground = pygame.transform.scale(self.menuBackground, (self.width, self.height))
+        self.menuBackRect = self.menuBackground.get_rect()
+
+        # Initializations for instructions screen
+        self.backBut = misc.Button((50, self.height - 115, 150, 75), "Back")
+        self.startBut2 = misc.Button((self.width - 200, self.height - 115, 150, 75), "Start!")
+        self.instruBackground = pygame.image.load('pics\instruction.png')
+        self.instruBackground = pygame.transform.scale(self.instruBackground, (self.width, self.height))
+        self.instrBackRect = self.instruBackground.get_rect()
+
+        # Initializations for gameover screen
+        self.quitBut2 = misc.Button((50, self.height - 115, 150, 75), "Quit!")
+        self.restBut = misc.Button((self.width - 200, self.height - 115, 150, 75), "Continue")
+        self.gameoverBackground = pygame.image.load('pics\gameOver.png')
+        self.gameoverBackground = pygame.transform.scale(self.gameoverBackground, (self.width, self.height))
+        self.gameoverBackRect = self.gameoverBackground.get_rect()
+
+        #Initializations for pause screen
+        self.menuBut = misc.Button((self.width//2 - 75, self.height//2, 150,75),"Menu")
+        self.continueBut = misc.Button((self.width//2 - 75, self.height //2 + 100, 150, 75), "Resume")
+        self.pauseBackground = pygame.image.load('pics\pause.png')
+        self.pauseBackground = pygame.transform.scale(self.pauseBackground,(self.width,self.height))
+        self.pauseBackgroundRect = self.pauseBackground.get_rect()
 
     # sets up random obstacles and new board every room
     def initializeBoard(self):
@@ -103,11 +126,11 @@ class PygameGame(object):
                     floor = map.Floor(x,y,width,height)
                     self.floorGroup.add(floor)
                 elif self.currBoard[i][j] == 4 and self.roomDead[self.room] == False:
-                    enemy = enemies.Chaser(x,y)
+                    enemy = enemies.Chaser(x,y,self.level)
                     self.enemyGroup.add(enemy)
                     self.enemiesLeft += 1
                 elif self.currBoard[i][j] == 5 and self.roomDead[self.room] == False:
-                    enemy = enemies.OnionBoss(x,y)
+                    enemy = enemies.OnionBoss(x,y,self.level)
                     self.bossGroup.add(enemy)
                     self.enemiesLeft += 1
         for wall in self.wallsGroup:
@@ -164,6 +187,7 @@ class PygameGame(object):
         self.initializeBoard()
         self.player1.x = self.width//2
         self.player1.y = self.height//2
+        self.roomDead = {0: True}
 
         for portal in self.portalGroup:
             portal.kill()
@@ -188,6 +212,13 @@ class PygameGame(object):
         self.isPaused = True
         self.isInstr = False
 
+    def gameOverScren(self):
+
+        self.isMenu = False
+        self.isInstr = False
+        self.isPaused = False
+        self.gameOver = True
+
 
 
     def mousePressed(self, x, y,):
@@ -195,18 +226,28 @@ class PygameGame(object):
         if self.isMenu:
             if self.startBut.clickCheck(x,y):
                 self.startGame()
-
             elif self.quitBut.clickCheck(x,y):
                 pygame.quit()
-
             elif self.instrBut.clickCheck(x,y):
                 self.instrScreen()
 
         elif self.isPaused:
-            pass
+            if self.menuBut.clickCheck(x,y):
+                main()
+            elif self.continueBut.clickCheck(x,y):
+                self.startGame()
 
         elif self.isInstr:
-            pass
+            if self.startBut2.clickCheck(x,y):
+                self.startGame()
+            elif self.backBut.clickCheck(x,y):
+                self.menuScreen()
+
+        elif self.gameOver:
+            if self.quitBut2.clickCheck(x,y):
+                pygame.quit()
+            elif self.restBut.clickCheck(x,y):
+                main()
         # TODO Create Instruction Screen and Pause Screen
 
         else:
@@ -233,12 +274,18 @@ class PygameGame(object):
             self.instrBut.mouseCheck(x,y)
 
         elif self.isPaused:
-            pass
+            self.menuBut.mouseCheck(x,y)
+            self.continueBut.mouseCheck(x,y)
 
         elif self.isInstr:
-            pass
-        else:
+            self.startBut2.mouseCheck(x,y)
+            self.backBut.mouseCheck(x,y)
 
+        elif self.gameOver:
+            self.quitBut2.mouseCheck(x,y)
+            self.restBut.mouseCheck(x,y)
+
+        else:
             pass
     def mouseDrag(self, x, y):
         pass
@@ -251,10 +298,15 @@ class PygameGame(object):
             pass
 
         else:
+            if keyCode == 112:
+                self.pauseScreen()
+
             if keyCode == 114:
-                main()
+                print(self.player1.x, self.player1.y)
+
             elif pygame.sprite.groupcollide(self.playerGroup,self.portalGroup,False,False) and keyCode == 32:
                 self.nextLevel()
+
 
 
     def keyReleased(self, keyCode, modifier):
@@ -349,16 +401,24 @@ class PygameGame(object):
 
             # enemy movement
             for enemy in self.enemyGroup:
+                #kills any enemies outside map
+                if (enemy.rect.x  < 110 and  (enemy.rect.y < 210 or enemy.rect.y > 400)) or (enemy.rect.x > 630 and \
+                                               (210 > enemy.rect.y  or enemy.rect.y > 400)):
+                    enemy.kill()
+                    self.enemiesLeft -= 1
+
                 if isinstance(enemy, enemies.Chaser):
-                    enemy.chase((self.player1.centerX, self.player1.centerY))
+                    enemy.chase((self.player1.centerX, self.player1.centerY),self.wallsGroup)
                 if pygame.sprite.spritecollide(enemy,self.wallsGroup,False) or enemy.rect.x < 0 \
                                                 or enemy.rect.x > self.width:
                     enemy.switchDir()
+
 
             for boss in self.bossGroup:
                 if pygame.sprite.spritecollide(boss, self.wallsGroup, False) or boss.rect.x < 0 \
                         or boss.rect.x > self.width:
                     boss.switchDir()
+
 
 
             # checks collisions between sprite groups
@@ -370,7 +430,7 @@ class PygameGame(object):
                     bullet.kill() # must change when different bullets are implemented
                     if enemy.health <= 0:
                         #sets up random chance of power up drop upon enemy death
-                        int = random.randint(0,30)
+                        int = random.randint(29,30)
                         if int == 30:
                             pu = random.choice(self.powerUps)
                             powerUp = pu(enemy.rect.center[0],enemy.rect.center[1])
@@ -391,6 +451,8 @@ class PygameGame(object):
 
             # deletes bullets that hit walls
             pygame.sprite.groupcollide(self.playerBulletsGroup, self.wallsGroup, True, False)
+
+
             #lowers player health if hit
             hitPlayer = pygame.sprite.spritecollide(self.player1, self.enemyGroup, False)
             hitPlayerBoss = pygame.sprite.spritecollide(self.player1,self.bossGroup,False)
@@ -402,8 +464,7 @@ class PygameGame(object):
             # player dies and game restarts #TODO change this so a gameover screen shows up with stats and stuff
             if self.player1.currHealth <= 0.01:
                 self.player1.kill()
-                self.gameOver = True
-                self.run()
+                self.gameOverScren()
 
 
             #power up changes
@@ -418,36 +479,46 @@ class PygameGame(object):
                 self.currPowerUp = hitPU[0]
                 hitPU[0].kill()
                 self.puTimer = 500
-                print(self.currPowerUp)
+
 
 
             # group updates
-            self.player1.update(self.wallsGroup)
+            self.playerGroup.update(self.wallsGroup)
             self.playerBulletsGroup.update()
-            self.enemyGroup.update()
+            self.enemyGroup.update(self.wallsGroup)
             self.bossGroup.update()
 
 
     def redrawAll(self, screen):
 
         if self.isMenu:
-            # draws buttons
             screen.blit(self.menuBackground,self.menuBackRect)
             self.startBut.draw(screen)
             self.quitBut.draw(screen)
             self.instrBut.draw(screen)
 
         elif self.isPaused:
-            pass
+            screen.blit(self.pauseBackground,self.pauseBackgroundRect)
+            self.menuBut.draw(screen)
+            self.continueBut.draw(screen)
 
         elif self.isInstr:
-            pass
+            screen.blit(self.instruBackground,self.instrBackRect)
+            self.startBut2.draw(screen)
+            self.backBut.draw(screen)
+
+        elif self.gameOver:
+            self.leveldisp = misc.Text((self.width // 2 - 150, self.height // 2, 300, 75), "You Reached Level " \
+                                       + str(self.level) + ", Room " + str(self.room), (255, 0, 0))
+            screen.blit(self.gameoverBackground,self.gameoverBackRect)
+            self.quitBut2.draw(screen)
+            self.restBut.draw(screen)
+            self.leveldisp.draw(screen)
 
         else:
             # setting up map attributes on screen
             self.currRoom = self.font.render("Rm:" + str(self.room), True, (255, 0, 0))
             self.currRoomRect = self.currRoom.get_rect(center=(self.width - 43, 100))
-
             self.currLevel = self.font.render("Lvl:" + str(self.level), True, (255, 0, 0))
             self.currLevelRect = self.currLevel.get_rect(center=(self.width - 43, 75))
 
@@ -466,6 +537,20 @@ class PygameGame(object):
             self.p1Health1Rect = self.p1Health1.get_rect(center=(self.width - 43, 150))
             self.p1Health2Rect = self.p1Health2.get_rect()
             self.p1Health2Rect.x, self.p1Health2Rect.y = self.p1Health1Rect.x+2, self.p1Health1Rect.y+2
+
+            # setting up boss attributes on screen
+            for boss in self.bossGroup:
+                len = 296/boss.maxHealth
+                self.bossHealth1 = pygame.Surface((len*boss.health,46))
+                if boss.health / boss.maxHealth < 0.25:
+                    self.bossHealth1.fill((255,0,0))
+                else:
+                    self.bossHealth1.fill((0,255,0))
+                self.bossHealth2 = pygame.Surface((300,50))
+                self.bossHealth2.fill((255,255,255))
+                self.bossHealth2Rect = self.bossHealth2.get_rect(center = (self.width//2 + 100, 30))
+                self.bossHealth1Rect = self.bossHealth1.get_rect()
+                self.bossHealth1Rect.x , self.bossHealth1Rect.y = self.bossHealth2Rect.x+2 , self.bossHealth2Rect.y+2
 
 
             # draws map
@@ -494,6 +579,10 @@ class PygameGame(object):
 
             #draws boss
             pygame.sprite.Group.draw(self.bossGroup,screen)
+            #draws boss health
+            for boss in self.bossGroup:
+                screen.blit(self.bossHealth2,self.bossHealth2Rect)
+                screen.blit(self.bossHealth1,self.bossHealth1Rect)
 
             #draws powerUps
             pygame.sprite.Group.draw(self.powerUpGroup, screen)

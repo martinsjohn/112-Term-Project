@@ -53,7 +53,7 @@ class Button(object):
         self.right = rect[0] + rect[2]
         self.top = rect[1]
         self.bottom = rect[1] + rect[3]
-        self.textSize = 300//len(text)
+        self.textSize = 275//len(text)
         self.activeColor = (255,200,0)
         self.inactiveColor = (255,0,0)
         self.color = self.inactiveColor
@@ -77,12 +77,24 @@ class Button(object):
         surface.blit(self.text,self.textRect)
 
 
+class Text(object):
+    def __init__(self, rect, text, color):
+        self.rect = rect
+        self.textSize = 3*rect[2] // len(text)
+        self.font = pygame.font.Font('font\coolFont.ttf', self.textSize)
+        self.text = self.font.render(str(text), True, color )
+        self.textRect = self.text.get_rect(center=(rect[0] + rect[2] // 2, rect[1] + rect[3] // 2))
+
+    def draw(self,surface):
+        surface.blit(self.text,self.textRect)
+
+
 class Portal(pygame.sprite.Sprite):
     def __init__(self,x,y):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
-        self.imageRaw = pygame.image.load("pics\ladder.png")
+        self.imageRaw = pygame.image.load("pics\ladder2.png")
         self.image = pygame.transform.scale(self.imageRaw,(50,50))
         self.rect = self.image.get_rect()
         self.rect.center = (x,y)
