@@ -36,10 +36,12 @@ class PygameGame(object):
         self.playerBulletsGroup = pygame.sprite.Group()
         self.enemyBulletsGroup = pygame.sprite.Group()
         self.enemyGroup = pygame.sprite.Group()
+        self.bossGroup = pygame.sprite.Group()
         self.obstaclesGroup = pygame.sprite.Group()
         self.wallsGroup = pygame.sprite.Group()
         self.floorGroup = pygame.sprite.Group()
         self.powerUpGroup = pygame.sprite.Group()
+        self.portalGroup = pygame.sprite.Group()
 
         # Initializations for menu screen
         self.startBut = misc.Button((self.width//2 - 75, 4*self.height//7,150,75),"Start!")
@@ -84,7 +86,7 @@ class PygameGame(object):
         self.p1TomsRect = self.p1Toms.get_rect(center=(self.width-40, self.height - 120))
 
 
-
+    # sets up random obstacles and new board every room
     def initializeBoard(self):
         self.wallsGroup.empty()
         self.floorGroup.empty()
@@ -106,14 +108,15 @@ class PygameGame(object):
                     self.enemiesLeft += 1
                 elif self.currBoard[i][j] == 5 and self.roomDead[self.room] == False:
                     enemy = enemies.OnionBoss(x,y)
-                    self.enemyGroup.add(enemy)
+                    self.bossGroup.add(enemy)
                     self.enemiesLeft += 1
         for wall in self.wallsGroup:
-            stuckEnemies = pygame.sprite.spritecollide(wall, self.enemyGroup,True)
-            if stuckEnemies:
+            stuckEnemies = pygame.sprite.spritecollide(wall, self.enemyGroup,False)
+            for enemy in stuckEnemies:
+                enemy.kill()
                 self.enemiesLeft -= len(stuckEnemies)
 
-
+        # creates map walls depending on room
         if self.room == 0:
             wall1 = map.WallTop(2*width,2*height,14*width, height)
             wall2 = map.WallTop(2*width,3*height,width, 13*height)
@@ -151,6 +154,19 @@ class PygameGame(object):
             lst = [wall1,wall2,wall3,wall4,wall5,wall6,wall7]
             for wall in lst:
                 self.wallsGroup.add(wall)
+
+
+    def nextLevel(self):
+        self.level += 1
+        self.boardList = [map.startBoard]
+        self.room = 0
+        self.currBoard = self.boardList[self.room]
+        self.initializeBoard()
+        self.player1.x = self.width//2
+        self.player1.y = self.height//2
+
+        for portal in self.portalGroup:
+            portal.kill()
 
     def startGame(self):
         self.isMenu = False
@@ -237,6 +253,8 @@ class PygameGame(object):
         else:
             if keyCode == 114:
                 main()
+            elif pygame.sprite.groupcollide(self.playerGroup,self.portalGroup,False,False) and keyCode == 32:
+                self.nextLevel()
 
 
     def keyReleased(self, keyCode, modifier):
@@ -266,14 +284,6 @@ class PygameGame(object):
                 self.player1.velocity[0] = 0
 
     def timerFired(self, dt):
-        keyCode = pygame.key.get_pressed()
-        if self.currPowerUp != None:
-            self.puTimer -= 1
-            if self.puTimer == 0:
-                self.currPowerUp = None
-
-
-
 
         if self.isMenu:
             pass
@@ -282,44 +292,36 @@ class PygameGame(object):
             pass
 
         else:
+            #player movement
+            keyCode = pygame.key.get_pressed()
             if keyCode[119]:  # W
                 if (self.player1.isLeft, self.player1.isRight) == (False, False):
                     self.player1.isRight = True
                 self.player1.velocity[1] = -self.player1.speed
-
-
             if keyCode[97]:  # A
                 self.player1.isLeft, self.player1.isLookLeft = True, True
                 self.player1.velocity[0] = -self.player1.speed
-
-
             if keyCode[115]:  # S
                 if (self.player1.isLeft, self.player1.isRight) == (False, False):
                     self.player1.isLeft = True
                 self.player1.velocity[1] = self.player1.speed
-
-
             if keyCode[100]:  # D
                 self.player1.isRight, self.player1.isLookRight = True, True
                 self.player1.velocity[0] = self.player1.speed
 
 
-            self.playerGroup.update(self.wallsGroup)
 
-
+            # sets up room switch when player moves to side of the screen
             if self.player1.centerX >= self.width:
                 if self.roomDead[self.room] == True:
-
                     self.room += 1
                     if self.room < 4:
                         if self.room > len(self.boardList) - 1:
                             newBoard = map.makeBoard(copy.deepcopy(map.mainBoard),map.obstacles)
                             self.boardList.append(newBoard)
-
                     elif self.room ==4:
                         if self.room > len(self.boardList) - 1:
                             self.boardList.append(map.bossBoard)
-
                     enemiesDead = self.roomDead.get(self.room, None)
                     if enemiesDead == None:
                         self.roomDead[self.room] = False
@@ -328,7 +330,7 @@ class PygameGame(object):
                     self.player1.x = 0
                     self.player1.y = self.height//2
                 else:
-                    self.player1.centerX = self.width
+                    self.player1.x = self.width - self.player1.rect.width//2
 
             elif self.player1.centerX <= 0:
                 if self.roomDead[self.room] == True:
@@ -338,9 +340,14 @@ class PygameGame(object):
                     self.player1.x = self.width - self.player1.rect.width
                     self.player1.y = self.height//2
                 else:
-                    self.player1.centerX = 0
+                    self.player1.x =  0- self.player1.rect.width//2
+            # only allows player to move between rooms if all enemies are dead
+            if self.enemiesLeft <= 0:
+                self.roomDead[self.room] = True
 
 
+
+            # enemy movement
             for enemy in self.enemyGroup:
                 if isinstance(enemy, enemies.Chaser):
                     enemy.chase((self.player1.centerX, self.player1.centerY))
@@ -348,28 +355,64 @@ class PygameGame(object):
                                                 or enemy.rect.x > self.width:
                     enemy.switchDir()
 
+            for boss in self.bossGroup:
+                if pygame.sprite.spritecollide(boss, self.wallsGroup, False) or boss.rect.x < 0 \
+                        or boss.rect.x > self.width:
+                    boss.switchDir()
+
 
             # checks collisions between sprite groups
-            pygame.sprite.groupcollide(self.playerBulletsGroup, self.enemyGroup, False, False)
             for bullet in self.playerBulletsGroup:
                 hitEnemies = pygame.sprite.spritecollide(bullet, self.enemyGroup, False)
+                hitBoss = pygame.sprite.spritecollide(bullet,self.bossGroup,False)
                 for enemy in hitEnemies:
                     enemy.health -= bullet.power
-                    bullet.kill()
+                    bullet.kill() # must change when different bullets are implemented
                     if enemy.health <= 0:
-                        int = random.randint(28,30)
+                        #sets up random chance of power up drop upon enemy death
+                        int = random.randint(0,30)
                         if int == 30:
-                            pu = random.choice(self.powerUps) # TODO change so that puTImer only runs when power up is picked up and find way to display power up with time left on screen!
+                            pu = random.choice(self.powerUps)
                             powerUp = pu(enemy.rect.center[0],enemy.rect.center[1])
                             self.powerUpGroup.add(powerUp)
                         enemy.kill()
                         self.enemiesLeft -= 1
+                for boss in hitBoss:
+                    boss.health -= bullet.power
+                    bullet.kill()
+                    if boss.health <= 0:
+                        # drops ladder to advance to next level
+                        ladder = misc.Portal(boss.rect.x, boss.rect.y)
+                        self.portalGroup.add(ladder)
+                        boss.kill()
+                        self.enemiesLeft -= 1
 
+
+
+            # deletes bullets that hit walls
             pygame.sprite.groupcollide(self.playerBulletsGroup, self.wallsGroup, True, False)
-            if self.enemiesLeft <= 0:
-                self.roomDead[self.room] = True
+            #lowers player health if hit
+            hitPlayer = pygame.sprite.spritecollide(self.player1, self.enemyGroup, False)
+            hitPlayerBoss = pygame.sprite.spritecollide(self.player1,self.bossGroup,False)
+            for enemy in hitPlayer:
+                self.player1.currHealth -= enemy.power
+            for boss in hitPlayerBoss:
+                self.player1.currHealth -= boss.power
+
+            # player dies and game restarts #TODO change this so a gameover screen shows up with stats and stuff
+            if self.player1.currHealth <= 0.01:
+                self.player1.kill()
+                self.gameOver = True
+                self.run()
 
 
+            #power up changes
+            #sets up power up timer
+            if self.currPowerUp != None:
+                self.puTimer -= 1
+                if self.puTimer == 0:
+                    self.currPowerUp = None
+            #checks for player collision with power up
             hitPU = pygame.sprite.spritecollide(self.player1, self.powerUpGroup,False)
             if hitPU:
                 self.currPowerUp = hitPU[0]
@@ -378,19 +421,11 @@ class PygameGame(object):
                 print(self.currPowerUp)
 
 
-
-            hitPlayer = pygame.sprite.spritecollide(self.player1,self.enemyGroup,False)
-            if hitPlayer:
-                self.player1.currHealth -= 0.01 * len(hitPlayer)
-
-            if self.player1.currHealth <= 0.01:
-                self.player1.kill()
-                self.gameOver = True
-                self.run()
-
+            # group updates
+            self.player1.update(self.wallsGroup)
             self.playerBulletsGroup.update()
             self.enemyGroup.update()
-
+            self.bossGroup.update()
 
 
     def redrawAll(self, screen):
@@ -439,6 +474,9 @@ class PygameGame(object):
             screen.blit(self.currRoom,self.currRoomRect)
             screen.blit(self.currLevel,self.currLevelRect)
 
+            # draws portal
+            pygame.sprite.Group.draw(self.portalGroup, screen)
+
             #draws player
             self.player1.preDraw()
             pygame.sprite.Group.draw(self.playerGroup,screen)
@@ -454,6 +492,9 @@ class PygameGame(object):
             #draws enemies
             pygame.sprite.Group.draw(self.enemyGroup, screen)
 
+            #draws boss
+            pygame.sprite.Group.draw(self.bossGroup,screen)
+
             #draws powerUps
             pygame.sprite.Group.draw(self.powerUpGroup, screen)
             if self.currPowerUp != None:
@@ -461,6 +502,8 @@ class PygameGame(object):
                 hei = self.currPowerUp.image.get_height()
                 screen.blit(self.currPowerUp.image,(puttX - wid//2,puttY - hei//2,wid,hei))
                 screen.blit(self.puTimerText,self.puTimerTextRect)
+
+
 
 
 

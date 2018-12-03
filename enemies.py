@@ -17,6 +17,7 @@ class Chaser(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.speed = 3
         self.attackRadius = 200
+        self.power = 0.1
         self.health = 2
         self.image = pygame.image.load("pics\chaser.png")
         self.rect = self.image.get_rect()
@@ -55,6 +56,7 @@ class OnionBoss(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.speed = 2
+        self.power = 1
         self.health = 2
         self.image = pygame.image.load("pics\evilOnionBoss.png")
         self.image = pygame.transform.scale(self.image,(150,100))

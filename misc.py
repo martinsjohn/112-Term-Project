@@ -77,6 +77,18 @@ class Button(object):
         surface.blit(self.text,self.textRect)
 
 
+class Portal(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        self.x = x
+        self.y = y
+        self.imageRaw = pygame.image.load("pics\ladder.png")
+        self.image = pygame.transform.scale(self.imageRaw,(50,50))
+        self.rect = self.image.get_rect()
+        self.rect.center = (x,y)
+
+
+
 
 
 
