@@ -24,7 +24,10 @@ class Player(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
         self.y = y
-        self.speed = 4
+        self.speed = 3
+        self.baseSpeed = 3
+        self.power = 1
+        self.basePower = 1
         self.velocity = [0,0]
         self.currVelocity = None
         self.isLookLeft = False
@@ -73,6 +76,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.y = self.y
         wallHit = pygame.sprite.spritecollide(self,walls,False)
         for wall in wallHit:
+
+
             # if moving up =, make boundary bottom of wall
             if self.velocity[1] < 0:
                 self.y = wall.rect.y + wall.rect.height
@@ -84,7 +89,7 @@ class Player(pygame.sprite.Sprite):
 
 
     def update(self,walls):
-
+        self.preDraw()
         self.moveX(walls)
         self.moveY(walls)
 
@@ -102,10 +107,24 @@ class Player(pygame.sprite.Sprite):
             self.image = self.standingL
         elif self.isLookRight:
             self.image = self.standingR
-
-        self.rect = self.image.get_rect()
+        # sets up rect crop to insure better player movement
+        self.rectRaw = self.image.get_rect()
+        x = self.rectRaw.x
+        y = self.rectRaw.y
+        wid = self.rectRaw.width
+        hei = self.rectRaw.height
+        self.rect = self.rectRaw.clip(x,y,wid-29,hei-20)
         (self.rect.x, self.rect.y) = (self.x, self.y)
         self.centerX, self.centerY = (self.x + (self.rect.width // 2), self.y + (self.rect.height // 2))
+
+    def draw(self,surface):
+        x = self.rect.x - 14
+        y = self.rect.y - 10
+        wid = self.rect.width
+        hei = self.rect.height
+        surface.blit(self.image,(x,y,wid,hei))
+
+
 
 
 

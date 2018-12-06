@@ -47,13 +47,13 @@ def inRect(checkP,rectP):
 
 
 class Button(object):
-    def __init__(self,rect,text):
+    def __init__(self,rect,text,textSize = 275):
         self.rect = rect
         self.left = rect[0]
         self.right = rect[0] + rect[2]
         self.top = rect[1]
         self.bottom = rect[1] + rect[3]
-        self.textSize = 275//len(text)
+        self.textSize =textSize//len(text)
         self.activeColor = (255,200,0)
         self.inactiveColor = (255,0,0)
         self.color = self.inactiveColor
@@ -99,11 +99,17 @@ class Portal(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x,y)
 
-
-
-
-
-
+class Chop (pygame.sprite.Sprite):
+    def __init__(self,x,y,width,height):
+        pygame.sprite.Sprite.__init__(self)
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.imageRaw = pygame.image.load('pics\chop.png')
+        self.image = pygame.transform.scale(self.imageRaw,(width,height))
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = self.x,self.y
 
 
 class PowerUp(pygame.sprite.Sprite):
@@ -143,6 +149,16 @@ class Health(PowerUp):
     def __init__(self,x,y,image = pygame.image.load("pics\health.png")):
         super().__init__(x,y,image)
         self.image = pygame.transform.scale(image,(50,50))
+
+
+class Coin (pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        self.coin = pygame.image.load('pics\money.png')
+        self.image = pygame.transform.scale(self.coin, (75, 75))
+        self.rect = self.image.get_rect(center = (x,y))
+
+
 
 
 
