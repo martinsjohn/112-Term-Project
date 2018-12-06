@@ -723,7 +723,7 @@ class PygameGame(object):
             currScore = (self.level,self.room)
             shelfFile = shelve.open("highscore")
             highScore = shelfFile.get('score',(0,0))
-            if currScore[0] >= highScore[0] and currScore[1] >= highScore[1]:
+            if (currScore[0] >= highScore[0] and currScore[1] >= highScore[1]) or (currScore[0] >= highScore[0]):
                 shelfFile['score'] = currScore
             shelfFile.close()
 
